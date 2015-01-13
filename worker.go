@@ -60,8 +60,8 @@ func (worker *Worker) ProcessRequest() {
 	handle := worker.handle
 
 	if req.Command == "NEWHANDLE" {
+		fmt.Printf("New handle\n")
 		res.ResData = EmptyObject{}
-
 		var cmdData CommandData
 		cmdData = req.CmdData
 
@@ -76,6 +76,14 @@ func (worker *Worker) ProcessRequest() {
 			res.Status = 0
 		}
 	}
+
+	handle.DsIter = getDatasetIterator(req.CmdData.DS)
+
+	if req.Command == "MC_DS_MUTATE_SET" {
+		handle.dsMutate()
+	}
+
+	//Create dataset iterator
 
 	b, err := json.Marshal(res)
 	if err != nil {

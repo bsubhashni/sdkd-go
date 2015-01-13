@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/couchbaselabs/go-couchbase"
+	"log"
 	"net/url"
 )
 
 type Handle struct {
 	couchbaseBucket *couchbase.Bucket
+	DsIter          DatasetIterator
 }
 
 func (handle *Handle) CreateNewCouchbaseConnection(hostname string, port int,
@@ -53,4 +55,17 @@ func (handle *Handle) CreateNewCouchbaseConnection(hostname string, port int,
 	}
 	fmt.Printf("Successfully instantiated connection \n")
 	return nil
+}
+
+func (handle *Handle) dsMutate() {
+	dsIter := handle.DsIter
+
+	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
+		key := dsIter.Key()
+		val := dsIter.Value()
+		err := handle.couchbaseBucket.Set(key, 0, val)
+		if err != nil {
+			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
+		}
+	}
 }

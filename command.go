@@ -1,6 +1,7 @@
 package main
 
 const (
+	NEWHANDLE        = "NEWH:ANDLE"
 	MC_DS_MUTATE_SET = "MC_DS_MUTATE_SET"
 	MC_DS_MUTATE_GET = "MC_DS_MUTATE_GET"
 	DSTYPE_SEEDED    = "SEEDED"
@@ -38,12 +39,13 @@ type Options struct {
 }
 
 type DS struct {
-	KSize  string `json:"KSize"`
-	KSeed  string `json:"KSeed"`
-	VSize  string `json:"VSize"`
-	VSeed  string `json:"VSeed"`
-	Repeat string `json:"Repeat"`
-	Count  int    `json:"Count"`
+	KSize      int    `json:"KSize"`
+	KSeed      string `json:"KSeed"`
+	VSize      int    `json:"VSize"`
+	VSeed      string `json:"VSeed"`
+	Repeat     string `json:"Repeat"`
+	Count      int    `json:"Count"`
+	Continuous bool   `json:"Continuous"`
 }
 
 type Schema struct {
