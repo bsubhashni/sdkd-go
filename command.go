@@ -9,21 +9,32 @@ const (
 type RequestCommand struct {
 	Command string      `json:"Command"`
 	ReqID   int         `json:"ReqID"`
-	cmdData interface{} `json:"CommandData"`
+	CmdData CommandData `json:"CommandData"`
 	Handle  int         `json:"Handle"`
 }
 
 type CommandData struct {
-	DSType  string  `json:"DSType"`
-	ds      DS      `json:"DS"`
-	Options options `json:"Options"`
-
+	DSType   string  `json:"DSType,omitempty"`
+	DS       DS      `json:"DS,omitempty"`
+	Options  Options `json:"Options,omitempty"`
+	Bucket   string  `json:"Bucket,omitempty"`
+	Port     int     `json:"Port,omitempty"`
+	Hostname string  `json:"Hostname,omitempty"`
 }
 
 type Options struct {
-    OtherNodes []string `json:"OtherNodes"`
-    Username string `json:"Username"`
-    ClusterCertificate `json:"Clu"
+	OtherNodes         []string `json:"OtherNodes"`
+	Username           string   `json:"Username"`
+	ClusterCertificate string   `json:"ClusterCertificate"`
+	SSL                bool     `json:"SSL"`
+	Password           string   `json:"Password"`
+	DelayMin           int      `json:"DelayMin"`
+	ReplicateTo        int      `json:"ReplicateTo"`
+	TimeRes            int      `json:"TimeRes"`
+	PersistTo          int      `json:"PersistTo"`
+	ReplicaRead        bool     `json:"ReplicaRead"`
+	IterWait           int      `json:"IterWait"`
+	DelayMax           int      `json:"DelayMax"`
 }
 
 type DS struct {
@@ -35,12 +46,20 @@ type DS struct {
 	Count  int    `json:"Count"`
 }
 
+type Schema struct {
+	InflateLevel   int    `json:"InflateLevel"`
+	InflateContent string `json:"InflateContent"`
+}
+
 type ResponseCommand struct {
 	Command string      `json:"Command"`
-	ReqId   int         `json:"ReqID"`
+	ReqID   int         `json:"ReqID"`
 	ResData interface{} `json:"ResponseData"`
-	Handle  int         `json:"HANDLE"`
-	Status  int         `json:"STATUS"`
+	Handle  int         `json:"Handle"`
+	Status  int         `json:"Status"`
+}
+
+type EmptyObject struct {
 }
 
 type InfoResponse struct {

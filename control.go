@@ -28,12 +28,12 @@ func (controller *Control) ReadRequest() bool {
 			if err == io.EOF {
 				return false
 			} else {
-				log.Fatalf("Error reading from Control Socket %v", err)
+				log.Fatalf("Error reading from Control Socket %v \n", err)
 			}
 		}
 
 		if bytesRead == 0 {
-			fmt.Printf("Remote has closed the connection")
+			fmt.Printf("Remote has closed the connection \n")
 			return false
 		}
 		fmt.Printf("Reading %d bytes from control socket \n", bytesRead)
@@ -46,13 +46,12 @@ func (controller *Control) ReadRequest() bool {
 func (controller *Control) ProcessRequest() {
 	buf := controller.InBuf
 
-	var res ResponseCommand
-
 	fmt.Printf("Got Message %s", string(buf))
 
 	var req RequestCommand
+	var res ResponseCommand
 	if err := json.Unmarshal(buf, &req); err != nil {
-		fmt.Printf("Cannot unmarshall command %v %v", err, req)
+		fmt.Printf("Cannot unmarshal command %v %v \n", err, req)
 	}
 
 	if req.Command == "INFO" {
@@ -60,7 +59,7 @@ func (controller *Control) ProcessRequest() {
 		res.ResData = InfoResponse{}
 		b, err := json.Marshal(res)
 		if err != nil {
-			fmt.Printf("Unable to marshal info response")
+			fmt.Printf("Unable to marshal info response \n")
 		} else {
 			controller.OutBuf = b
 		}
@@ -73,7 +72,7 @@ func (controller *Control) ProcessRequest() {
 func (controller *Control) WriteResponse() {
 	buf := controller.OutBuf
 
-    out :=  string(buf) + "\n"
+	out := string(buf) + "\n"
 
 	for {
 		bytesWritten, err := controller.Conn.Write([]byte(out))
@@ -83,7 +82,7 @@ func (controller *Control) WriteResponse() {
 		}
 
 		if bytesWritten == len([]byte(out)) {
-			fmt.Printf("Successfully wrote %s", out)
+			fmt.Printf("Successfully wrote %s \n", out)
 			break
 		}
 	}
@@ -102,7 +101,7 @@ func (controller *Control) RequestHandler() {
 }
 
 func (controller *Control) Start(conn net.Conn) {
-	fmt.Println("Starting Controller")
+	fmt.Println("Starting Controller \n")
 
 	controller.Conn = conn
 	controller.GotRequest = make(chan bool)
