@@ -16,6 +16,7 @@ type Worker struct {
 	GotRequest  chan bool
 	ShouldFlush chan bool
 	handle      *Handle
+	CloseConn   chan bool
 }
 
 func (worker *Worker) ReadRequest() {
@@ -77,13 +78,18 @@ func (worker *Worker) ProcessRequest() {
 		}
 	}
 
+	if req.Command == "CLOSEHANDLE" {
+		fmt.Printf("Close Handle\n")
+		res.ResData = EmptyObject{}
+		res.Status = 0
+	}
+
+	//Create Dataset Iterator
 	handle.DsIter = getDatasetIterator(req.CmdData.DS)
 
 	if req.Command == "MC_DS_MUTATE_SET" {
 		handle.dsMutate()
 	}
-
-	//Create dataset iterator
 
 	b, err := json.Marshal(res)
 	if err != nil {

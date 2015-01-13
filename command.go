@@ -31,11 +31,12 @@ type Options struct {
 	Password           string   `json:"Password"`
 	DelayMin           int      `json:"DelayMin"`
 	ReplicateTo        int      `json:"ReplicateTo"`
-	TimeRes            int      `json:"TimeRes"`
+	TimeRes            int64    `json:"TimeRes"`
 	PersistTo          int      `json:"PersistTo"`
 	ReplicaRead        bool     `json:"ReplicaRead"`
 	IterWait           int      `json:"IterWait"`
 	DelayMax           int      `json:"DelayMax"`
+	Full               bool     `json:"Full"`
 }
 
 type DS struct {

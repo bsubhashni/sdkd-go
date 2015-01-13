@@ -66,6 +66,7 @@ func (handle *Handle) dsMutate() {
 		err := handle.couchbaseBucket.Set(key, 0, val)
 		if err != nil {
 			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
+
 		}
 	}
 }

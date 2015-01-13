@@ -15,6 +15,7 @@ type Control struct {
 	InBuf       []byte
 	GotRequest  chan bool
 	ShouldFlush chan bool
+	Quit        chan bool
 }
 
 func (controller *Control) ReadRequest() bool {
@@ -65,6 +66,9 @@ func (controller *Control) ProcessRequest() {
 		}
 
 	}
+
+    if req.Command == "GOODBYE" {
+    }
 
 	controller.ShouldFlush <- true
 }
