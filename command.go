@@ -1,7 +1,7 @@
 package main
 
 const (
-	NEWHANDLE        = "NEWH:ANDLE"
+	NEWHANDLE        = "NEWHANDLE"
 	MC_DS_MUTATE_SET = "MC_DS_MUTATE_SET"
 	MC_DS_MUTATE_GET = "MC_DS_MUTATE_GET"
 	DSTYPE_SEEDED    = "SEEDED"
@@ -94,4 +94,23 @@ type Headers struct {
 
 type Runtime struct {
 	SDK string `json:"SDK"`
+}
+
+type ResultResponse struct {
+	Summary map[string]int `json:"Summary"`
+	Timings Timings        `json:"Timings"`
+}
+
+type Timings struct {
+	Base    int64    `json:"Base"`
+	Step    int64    `json:"Step"`
+	Windows []Window `json:"Windows"`
+}
+
+type Window struct {
+	Count  int64          `json:"Count"`
+	Avg    int64          `json:"Avg"`
+	Min    int64          `json:"Min"`
+	Max    int64          `json:"Max"`
+	Errors map[string]int `json:"Errors"`
 }
