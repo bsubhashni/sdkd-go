@@ -15,7 +15,7 @@ type Worker struct {
 	InBuf       []byte
 	GotRequest  chan bool
 	ShouldFlush chan bool
-	handle      *Handle
+	handle      Handle
 	CloseConn   chan bool
 }
 
@@ -85,10 +85,10 @@ func (worker *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-	handle.DsIter = getDatasetIterator(req.CmdData.DS)
+	handle.SetDatasetIterator(getDatasetIterator(req.CmdData.DS))
 
 	if req.Command == "MC_DS_MUTATE_SET" {
-		handle.dsMutate()
+		handle.DsMutate()
 	}
 
 	b, err := json.Marshal(res)
@@ -131,9 +131,10 @@ func (worker *Worker) RequestHandler() {
 
 func (worker *Worker) Start(conn net.Conn) {
 	fmt.Println("Starting new worker \n")
+	var h Handle_v2
 
 	worker.Conn = conn
-	worker.handle = new(Handle)
+	worker.handle = h
 	worker.GotRequest = make(chan bool)
 	worker.ShouldFlush = make(chan bool)
 

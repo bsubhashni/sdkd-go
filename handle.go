@@ -2,17 +2,33 @@ package main
 
 import (
 	"fmt"
+	"github.com/brett19/gocouchbase"
 	"github.com/couchbaselabs/go-couchbase"
 	"log"
 	"net/url"
 )
 
-type Handle struct {
+type Handle interface {
+	SetDatasetIterator(DatasetIterator)
+	CreateNewCouchbaseConnection(string, int, string, string, string) error
+	DsMutate()
+}
+
+type Handle_v1 struct {
 	couchbaseBucket *couchbase.Bucket
 	DsIter          DatasetIterator
 }
 
-func (handle *Handle) CreateNewCouchbaseConnection(hostname string, port int,
+type Handle_v2 struct {
+	bucket *gocouchbase.Bucket
+	DsIter DatasetIterator
+}
+
+func (handle Handle_v1) SetDatasetIterator(ds DatasetIterator) {
+	handle.DsIter = ds
+}
+
+func (handle Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 	bucket string, username string, password string) (err error) {
 
 	var connStr string
@@ -57,7 +73,7 @@ func (handle *Handle) CreateNewCouchbaseConnection(hostname string, port int,
 	return nil
 }
 
-func (handle *Handle) dsMutate() {
+func (handle Handle_v1) DsMutate() {
 	dsIter := handle.DsIter
 
 	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
@@ -67,6 +83,67 @@ func (handle *Handle) dsMutate() {
 		if err != nil {
 			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
 
+		}
+	}
+}
+
+func (handle Handle_v1) DsGet() {
+	dsIter := handle.DsIter
+
+	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
+		key := dsIter.Key()
+		var val string
+		err := handle.couchbaseBucket.Get(key, val)
+		if err != nil {
+			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
+
+		}
+	}
+}
+
+func (handle Handle_v2) SetDatasetIterator(dsIter DatasetIterator) {
+	handle.DsIter = dsIter
+}
+
+func (handle Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
+	bucket string, username string, password string) (err error) {
+	connStr := "http://" + hostname + string(port)
+
+	c, err := gocouchbase.Connect(connStr)
+	if err != nil {
+		return err
+	}
+
+	handle.bucket, err = c.OpenBucket(bucket, password)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (handle Handle_v2) DsMutate() {
+	dsIter := handle.DsIter
+
+	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
+		key := dsIter.Key()
+		val := dsIter.Value()
+		_, err := handle.bucket.Upsert(key, val, 0)
+		if err != nil {
+			log.Fatalf("Cannot set items using handle v2 %v %v %v\n", err, key, val)
+		}
+	}
+}
+
+func (handle Handle_v2) DsGet() {
+	dsIter := handle.DsIter
+
+	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
+		key := dsIter.Key()
+		var v string
+		_, _, err := handle.bucket.Get(key, v)
+
+		if err != nil {
+			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
 		}
 	}
 }
