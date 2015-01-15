@@ -24,11 +24,11 @@ type Handle_v2 struct {
 	DsIter DatasetIterator
 }
 
-func (handle Handle_v1) SetDatasetIterator(ds DatasetIterator) {
+func (handle *Handle_v1) SetDatasetIterator(ds DatasetIterator) {
 	handle.DsIter = ds
 }
 
-func (handle Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
+func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 	bucket string, username string, password string) (err error) {
 
 	var connStr string
@@ -73,7 +73,7 @@ func (handle Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 	return nil
 }
 
-func (handle Handle_v1) DsMutate() {
+func (handle *Handle_v1) DsMutate() {
 	dsIter := handle.DsIter
 
 	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
@@ -87,7 +87,7 @@ func (handle Handle_v1) DsMutate() {
 	}
 }
 
-func (handle Handle_v1) DsGet() {
+func (handle *Handle_v1) DsGet() {
 	dsIter := handle.DsIter
 
 	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
@@ -101,13 +101,17 @@ func (handle Handle_v1) DsGet() {
 	}
 }
 
-func (handle Handle_v2) SetDatasetIterator(dsIter DatasetIterator) {
+func (handle *Handle_v2) SetDatasetIterator(dsIter DatasetIterator) {
+    fmt.Printf("Setting data set iterator")
+    if dsIter == nil {
+        fmt.Printf("dataset iterator is nil")
+    }
 	handle.DsIter = dsIter
 }
 
-func (handle Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
+func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
 	bucket string, username string, password string) (err error) {
-	connStr := "http://" + hostname + string(port)
+	connStr := "couchbase://" + hostname
 
 	c, err := gocouchbase.Connect(connStr)
 	if err != nil {
@@ -121,8 +125,9 @@ func (handle Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
 	return nil
 }
 
-func (handle Handle_v2) DsMutate() {
+func (handle *Handle_v2) DsMutate() {
 	dsIter := handle.DsIter
+
 
 	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {
 		key := dsIter.Key()
@@ -134,7 +139,7 @@ func (handle Handle_v2) DsMutate() {
 	}
 }
 
-func (handle Handle_v2) DsGet() {
+func (handle *Handle_v2) DsGet() {
 	dsIter := handle.DsIter
 
 	for dsIter.Start(); dsIter.Advance(); dsIter.Done() {

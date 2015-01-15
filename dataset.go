@@ -3,6 +3,7 @@ package main
 import (
     "bytes"
     "fmt"
+    "strconv"
 )
 
 type DatasetIterator interface {
@@ -36,7 +37,7 @@ func (ds *DatasetSeededIterator) Start() {
 }
 
 func (ds *DatasetSeededIterator) fillRepeat(size int, seed string) string {
-	filler := ds.spec.Repeat + string(ds.curidx)
+	filler := ds.spec.Repeat + strconv.Itoa(ds.curidx)
     base := seed + filler
     buf := new(bytes.Buffer)
 

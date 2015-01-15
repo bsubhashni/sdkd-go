@@ -134,7 +134,7 @@ func (worker *Worker) Start(conn net.Conn) {
 	var h Handle_v2
 
 	worker.Conn = conn
-	worker.handle = h
+	worker.handle = &h
 	worker.GotRequest = make(chan bool)
 	worker.ShouldFlush = make(chan bool)
 
