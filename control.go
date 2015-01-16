@@ -10,6 +10,7 @@ import (
 )
 
 type Control struct {
+	parent      *Sdkd
 	Conn        net.Conn
 	OutBuf      []byte
 	InBuf       []byte
@@ -18,7 +19,7 @@ type Control struct {
 	Quit        chan bool
 }
 
-func (controller *Control) ReadRequest() bool {
+func (controller *Control) ReadRequest() {
 	rdr := bufio.NewReader(controller.Conn)
 
 	for {
@@ -27,7 +28,7 @@ func (controller *Control) ReadRequest() bool {
 
 		if err != nil {
 			if err == io.EOF {
-				return false
+				return
 			} else {
 				log.Fatalf("Error reading from Control Socket %v \n", err)
 			}
@@ -35,12 +36,11 @@ func (controller *Control) ReadRequest() bool {
 
 		if bytesRead == 0 {
 			fmt.Printf("Remote has closed the connection \n")
-			return false
+			controller.Quit <- true
 		}
 		fmt.Printf("Reading %d bytes from control socket \n", bytesRead)
 		controller.GotRequest <- true
 		controller.InBuf = buf[:bytesRead]
-		return true
 	}
 }
 
@@ -67,8 +67,14 @@ func (controller *Control) ProcessRequest() {
 
 	}
 
-    if req.Command == "GOODBYE" {
-    }
+	if req.Command == "CANCEL" {
+		//cancels the handle sent on request
+        
+	}
+
+	if req.Command == "GOODBYE" {
+		//close all handles
+	}
 
 	controller.ShouldFlush <- true
 }
@@ -99,6 +105,8 @@ func (controller *Control) RequestHandler() {
 			go controller.ProcessRequest()
 		case <-controller.ShouldFlush:
 			go controller.WriteResponse()
+		case <-controller.Quit:
+			break
 		default:
 		}
 	}

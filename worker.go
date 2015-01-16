@@ -10,6 +10,7 @@ import (
 )
 
 type Worker struct {
+	parent      *Sdkd
 	Conn        net.Conn
 	OutBuf      []byte
 	InBuf       []byte
@@ -17,6 +18,7 @@ type Worker struct {
 	ShouldFlush chan bool
 	handle      Handle
 	CloseConn   chan bool
+	Quit        chan bool
 }
 
 func (worker *Worker) ReadRequest() {
@@ -65,7 +67,6 @@ func (worker *Worker) ProcessRequest() {
 		res.ResData = EmptyObject{}
 		var cmdData CommandData
 		cmdData = req.CmdData
-
 		if err := handle.CreateNewCouchbaseConnection(cmdData.Hostname,
 			cmdData.Port,
 			cmdData.Bucket,
@@ -76,16 +77,24 @@ func (worker *Worker) ProcessRequest() {
 		} else {
 			res.Status = 0
 		}
+
+		worker.parent.Mutex.Lock()
+		worker.parent.HandleMap[req.ReqID] = worker
+		worker.parent.Mutex.Unlock()
 	}
 
 	if req.Command == "CLOSEHANDLE" {
 		fmt.Printf("Close Handle\n")
 		res.ResData = EmptyObject{}
 		res.Status = 0
+		worker.parent.Mutex.Lock()
+		delete(worker.parent.HandleMap, req.ReqID)
+		worker.parent.Mutex.Unlock()
+		worker.Quit <- true
 	}
 
 	//Create Dataset Iterator
-	handle.SetDatasetIterator(getDatasetIterator(req.CmdData.DS))
+	handle.Init(getDatasetIterator(req.CmdData.DS))
 
 	if req.Command == "MC_DS_MUTATE_SET" {
 		handle.DsMutate()
@@ -124,6 +133,9 @@ func (worker *Worker) RequestHandler() {
 			go worker.ProcessRequest()
 		case <-worker.ShouldFlush:
 			go worker.WriteResponse()
+		case <-worker.Quit:
+			worker.Conn.Close()
+			break
 		default:
 		}
 	}
@@ -137,6 +149,7 @@ func (worker *Worker) Start(conn net.Conn) {
 	worker.handle = &h
 	worker.GotRequest = make(chan bool)
 	worker.ShouldFlush = make(chan bool)
+	worker.Quit = make(chan bool)
 
 	go worker.ReadRequest()
 	go worker.RequestHandler()

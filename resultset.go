@@ -81,7 +81,6 @@ func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedVal
 }
 
 func (rs *ResultSet) ResultsJson(res *ResultResponse) {
-
 	for rc, count := range rs.Stats {
 		res.Summary[string(rc)] = count
 	}
