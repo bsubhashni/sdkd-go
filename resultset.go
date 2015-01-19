@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"syscall"
 )
 
@@ -33,16 +34,31 @@ type ResultSet struct {
 	winBegin   int64
 }
 
+func getEpochMsecs() int64 {
+	var tv syscall.Timeval
+	if err := syscall.Gettimeofday(&tv); err != nil {
+		fmt.Printf("Error on gettimeofday %v \n", err)
+	}
+	return (int64(tv.Sec) * 1000) + (int64(tv.Usec) / 1000)
+}
+
 func (fr *FullResult) SetStatus(value string, status uint16) {
 	if value == "" {
 		fr.status = 1
 	}
+}
 
+func (rs *ResultSet) Initialize() {
+	rs.FullStats = make(map[string]interface{})
+	rs.Stats = make(map[uint16]int)
+}
+
+func (rs *ResultSet) MarkBegin() {
+	rs.opStart = getEpochMsecs()
 }
 
 func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedValue string) {
-
-	rs.remaining--
+	//rs.remaining--
 	rs.Stats[rc]++
 
 	if rs.Options.Full == true {
@@ -53,23 +69,33 @@ func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedVal
 		return
 	}
 
+	curTimeInMSecs := getEpochMsecs()
+	opsDuration := curTimeInMSecs - rs.opStart
+
 	var tv syscall.Timeval
 	if err := syscall.Gettimeofday(&tv); err != nil {
 		fmt.Printf("Error on gettimeofday %v \n", err)
 	}
-
-	curTimeInMSecs := (int64(tv.Sec) * 1000) + (int64(tv.Usec) / 1000)
-	opsDuration := curTimeInMSecs - rs.opStart
 	rs.curTFrame = tv.Sec - (tv.Sec % rs.Options.TimeRes)
 
 	var win TimeWindow
+	win.ec = make(map[uint16]int)
 
 	if rs.curWinTime == 0 {
 		rs.curWinTime = rs.curTFrame
 		rs.winBegin = rs.curTFrame
-		_ = append(rs.TimeStats, win)
+		rs.TimeStats = append(rs.TimeStats, win)
 	} else if rs.curWinTime < rs.curTFrame {
+		for rs.curWinTime < rs.curTFrame {
+			var tmp TimeWindow
+			tmp.timeMin = 0
+			tmp.ec = make(map[uint16]int)
+			rs.TimeStats = append(rs.TimeStats, tmp)
+			rs.curWinTime += rs.Options.TimeRes
 
+		}
+		win := &rs.TimeStats[len(rs.TimeStats)-1]
+		win.timeMin = 0
 	}
 
 	lastWin := &rs.TimeStats[len(rs.TimeStats)-1]
@@ -81,8 +107,10 @@ func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedVal
 }
 
 func (rs *ResultSet) ResultsJson(res *ResultResponse) {
+	res.Summary = make(map[string]int)
+
 	for rc, count := range rs.Stats {
-		res.Summary[string(rc)] = count
+		res.Summary[strconv.Itoa(int(rc))] = count
 	}
 
 	if rs.Options.TimeRes == 0 {
@@ -91,6 +119,8 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 
 	res.Timings.Base = rs.winBegin
 	res.Timings.Step = rs.Options.TimeRes
+
+	fmt.Printf("Time step %v", res.Timings.Step)
 
 	for _, winstat := range rs.TimeStats {
 		win := Window{}
@@ -102,10 +132,11 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 		} else {
 			win.Avg = 0
 		}
+		win.Errors = make(map[string]int)
 		for rc, count := range winstat.ec {
-			win.Errors[string(rc)] = count
+			win.Errors[strconv.Itoa(int(rc))] = count
 		}
-		_ = append(res.Timings.Windows, win)
+		res.Timings.Windows = append(res.Timings.Windows, win)
 	}
 
 }

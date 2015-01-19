@@ -47,35 +47,47 @@ func (controller *Control) ReadRequest() {
 func (controller *Control) ProcessRequest() {
 	buf := controller.InBuf
 
-	fmt.Printf("Got Message %s", string(buf))
-
 	var req RequestCommand
 	var res ResponseCommand
 	if err := json.Unmarshal(buf, &req); err != nil {
 		fmt.Printf("Cannot unmarshal command %v %v \n", err, req)
 	}
 
-	if req.Command == "INFO" {
-		res.Command = req.Command
-		res.ResData = InfoResponse{}
-		b, err := json.Marshal(res)
-		if err != nil {
-			fmt.Printf("Unable to marshal info response \n")
-		} else {
-			controller.OutBuf = b
-		}
+	fmt.Printf("Got message %s %s", string(buf), req.Command)
+	res.Command = req.Command
+	res.ReqID = req.ReqID
 
+	if req.Command == "INFO" {
+		res.ResData = InfoResponse{}
 	}
 
 	if req.Command == "CANCEL" {
 		//cancels the handle sent on request
-        
+		fmt.Printf("Handling CANCEL command \n")
+		res.Handle = req.Handle
+		res.ResData = EmptyObject{}
+		controller.parent.Mutex.Lock()
+		fmt.Printf("Handlemap length %v %v \n", len(controller.parent.HandleMap), controller.parent.HandleMap)
+		if controller.parent.HandleMap == nil {
+			log.Fatalf("Cannot find the requested handle to cancel\n")
+		} else {
+
+			fmt.Printf("Cancelling the handle \n")
+			controller.parent.HandleMap[req.Handle].handle.Cancel()
+		}
+		controller.parent.Mutex.Unlock()
 	}
 
 	if req.Command == "GOODBYE" {
 		//close all handles
 	}
 
+	b, err := json.Marshal(res)
+	if err != nil {
+		fmt.Printf("Unable to marshal info response \n")
+	} else {
+		controller.OutBuf = b
+	}
 	controller.ShouldFlush <- true
 }
 
@@ -93,6 +105,7 @@ func (controller *Control) WriteResponse() {
 
 		if bytesWritten == len([]byte(out)) {
 			fmt.Printf("Successfully wrote %s \n", out)
+			controller.OutBuf = []byte{}
 			break
 		}
 	}

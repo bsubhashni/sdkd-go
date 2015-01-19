@@ -79,8 +79,13 @@ func (worker *Worker) ProcessRequest() {
 		}
 
 		worker.parent.Mutex.Lock()
-		worker.parent.HandleMap[req.ReqID] = worker
+		worker.parent.HandleMap[req.Handle] = worker
 		worker.parent.Mutex.Unlock()
+	}
+
+	if req.Command == "CANCEL" {
+		fmt.Printf("Cancel Handle \n")
+		res.ResData = EmptyObject{}
 	}
 
 	if req.Command == "CLOSEHANDLE" {
@@ -90,14 +95,16 @@ func (worker *Worker) ProcessRequest() {
 		worker.parent.Mutex.Lock()
 		delete(worker.parent.HandleMap, req.ReqID)
 		worker.parent.Mutex.Unlock()
-		worker.Quit <- true
 	}
 
 	//Create Dataset Iterator
-	handle.Init(getDatasetIterator(req.CmdData.DS))
+	req.CmdData.Options.TimeRes = 1
+	handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options)
 
 	if req.Command == "MC_DS_MUTATE_SET" {
 		handle.DsMutate()
+		res.ResData = handle.GetResult()
+		fmt.Printf("%v", res.ResData)
 	}
 
 	b, err := json.Marshal(res)
@@ -106,7 +113,12 @@ func (worker *Worker) ProcessRequest() {
 	}
 	worker.OutBuf = b
 	fmt.Printf("Worker out buffer %s \n", string(b))
+
 	worker.ShouldFlush <- true
+
+	if req.Command == "CLOSEHANDLE" {
+		worker.Quit <- true
+	}
 }
 
 func (worker *Worker) WriteResponse() {

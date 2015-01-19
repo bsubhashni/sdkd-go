@@ -1,9 +1,9 @@
 package main
 
 import (
-    "bytes"
-    "fmt"
-    "strconv"
+	"bytes"
+	"fmt"
+	"strconv"
 )
 
 type DatasetIterator interface {
@@ -21,34 +21,34 @@ type DatasetSeededIterator struct {
 	curidx int
 }
 
-
 func getDatasetIterator(spec DS) DatasetIterator {
-    ds := new(DatasetSeededIterator)
-    ds.SetSpec(spec)
-    return ds
+	ds := new(DatasetSeededIterator)
+	ds.SetSpec(spec)
+	return ds
 }
 
 func (ds *DatasetSeededIterator) SetSpec(spec DS) {
-    ds.spec = spec
+	ds.spec = spec
 }
 
 func (ds *DatasetSeededIterator) Start() {
 	ds.curidx = 0
+	ds.initData()
 }
 
 func (ds *DatasetSeededIterator) fillRepeat(size int, seed string) string {
 	filler := ds.spec.Repeat + strconv.Itoa(ds.curidx)
-    base := seed + filler
-    buf := new(bytes.Buffer)
+	base := seed + filler
+	buf := new(bytes.Buffer)
 
-    buf.Write([]byte(base))
-    for buf.Len() < size {
-        _, err := buf.Write([]byte(filler))
-        if err != nil {
-            fmt.Printf("Cannot write to dataset buffer: %v\n", err)
-        }
-    }
-    return buf.String()
+	buf.Write([]byte(base))
+	for buf.Len() < size {
+		_, err := buf.Write([]byte(filler))
+		if err != nil {
+			fmt.Printf("Cannot write to dataset buffer: %v\n", err)
+		}
+	}
+	return buf.String()
 }
 
 func (ds *DatasetSeededIterator) initData() {
@@ -58,11 +58,12 @@ func (ds *DatasetSeededIterator) initData() {
 }
 
 func (ds *DatasetSeededIterator) Advance() bool {
-    if ds.spec.Continuous && ds.curidx > ds.spec.Count {
-        ds.curidx = 0
-    }
-    ds.initData()
-    return true
+	if ds.spec.Continuous && ds.curidx > ds.spec.Count {
+		fmt.Printf("Resetting idx \n")
+		ds.curidx = 0
+	}
+	ds.initData()
+	return true
 }
 
 func (ds *DatasetSeededIterator) Done() bool {
@@ -71,6 +72,7 @@ func (ds *DatasetSeededIterator) Done() bool {
 	}
 
 	if ds.curidx >= ds.spec.Count {
+		fmt.Printf("Greater than count - returning false\n")
 		return true
 	}
 
