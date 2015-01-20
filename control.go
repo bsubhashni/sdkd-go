@@ -63,16 +63,12 @@ func (controller *Control) ProcessRequest() {
 
 	if req.Command == "CANCEL" {
 		//cancels the handle sent on request
-		fmt.Printf("Handling CANCEL command \n")
 		res.Handle = req.Handle
 		res.ResData = EmptyObject{}
 		controller.parent.Mutex.Lock()
-		fmt.Printf("Handlemap length %v %v \n", len(controller.parent.HandleMap), controller.parent.HandleMap)
 		if controller.parent.HandleMap == nil {
 			log.Fatalf("Cannot find the requested handle to cancel\n")
 		} else {
-
-			fmt.Printf("Cancelling the handle \n")
 			controller.parent.HandleMap[req.Handle].handle.Cancel()
 		}
 		controller.parent.Mutex.Unlock()
@@ -80,6 +76,12 @@ func (controller *Control) ProcessRequest() {
 
 	if req.Command == "GOODBYE" {
 		//close all handles
+		controller.parent.Mutex.Lock()
+		for handleid, worker := range controller.parent.HandleMap {
+			fmt.Printf("Sending kill signal to handle worker %d", handleid)
+			worker.Quit <- true
+		}
+		controller.parent.Mutex.Unlock()
 	}
 
 	b, err := json.Marshal(res)

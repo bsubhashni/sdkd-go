@@ -14,7 +14,7 @@ type Handle interface {
 	DsMutate()
 	DsGet()
 	GetResult() *ResultResponse
-    Cancel()
+	Cancel()
 }
 
 type Handle_v1 struct {
@@ -84,13 +84,13 @@ func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 
 func (handle *Handle_v1) DsMutate() {
 	dsIter := handle.DsIter
-    handle.DoCancel = false
+	handle.DoCancel = false
 
-    for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
+	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
 		val := dsIter.Value()
 
-        handle.rs.MarkBegin()
+		handle.rs.MarkBegin()
 		err := handle.couchbaseBucket.Set(key, 0, val)
 		if err != nil {
 			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
@@ -101,13 +101,13 @@ func (handle *Handle_v1) DsMutate() {
 
 func (handle *Handle_v1) DsGet() {
 	dsIter := handle.DsIter
-    handle.DoCancel = false
+	handle.DoCancel = false
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
 		var val string
 
-        handle.rs.MarkBegin()
+		handle.rs.MarkBegin()
 		err := handle.couchbaseBucket.Get(key, val)
 		if err != nil {
 			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
@@ -117,7 +117,7 @@ func (handle *Handle_v1) DsGet() {
 }
 
 func (handle *Handle_v1) Cancel() {
-    handle.DoCancel = true
+	handle.DoCancel = true
 }
 
 func (handle *Handle_v1) GetResult() *ResultResponse {
@@ -151,13 +151,13 @@ func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
 
 func (handle *Handle_v2) DsMutate() {
 	dsIter := handle.DsIter
-    handle.DoCancel = false
+	handle.DoCancel = false
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
 		val := dsIter.Value()
 
-        handle.rs.MarkBegin()
+		handle.rs.MarkBegin()
 
 		_, err := handle.bucket.Upsert(key, val, 0)
 		if err != nil {
@@ -171,18 +171,18 @@ func (handle *Handle_v2) DsMutate() {
 
 func (handle *Handle_v2) DsGet() {
 	dsIter := handle.DsIter
-    handle.DoCancel = false
+	handle.DoCancel = false
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
 		var v string
-        
-        handle.rs.MarkBegin()
+
+		handle.rs.MarkBegin()
 
 		_, _, err := handle.bucket.Get(key, v)
 
 		if err != nil {
-			//log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
+			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
 			handle.rs.setResCode(1, key, v, "")
 		} else {
 
@@ -198,5 +198,5 @@ func (handle *Handle_v2) GetResult() *ResultResponse {
 }
 
 func (handle *Handle_v2) Cancel() {
-    handle.DoCancel = true
+	handle.DoCancel = true
 }

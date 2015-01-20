@@ -98,7 +98,6 @@ func (worker *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-	req.CmdData.Options.TimeRes = 1
 	handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options)
 
 	if req.Command == "MC_DS_MUTATE_SET" {

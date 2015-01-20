@@ -127,7 +127,7 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 		win.Count = winstat.count
 		win.Min = int64(winstat.timeMin)
 		win.Max = int64(winstat.timeMax)
-		if winstat.count == 0 {
+		if winstat.count != 0 {
 			win.Avg = winstat.timeTotal / winstat.count
 		} else {
 			win.Avg = 0
