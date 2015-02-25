@@ -10,7 +10,6 @@ Go
 make
 
 This should create the executable sdkd-go. 
-./sdkd-go
 
 By default, the sdkd starts listening on port 8050
 

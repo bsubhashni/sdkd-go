@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/brett19/gocouchbase"
 	"github.com/couchbaselabs/go-couchbase"
+	"github.com/couchbaselabs/gocb"
 	"log"
 	"net/url"
 )
@@ -25,7 +25,7 @@ type Handle_v1 struct {
 }
 
 type Handle_v2 struct {
-	bucket   *gocouchbase.Bucket
+	bucket   *gocb.Bucket
 	DsIter   DatasetIterator
 	rs       *ResultSet
 	DoCancel bool
@@ -137,7 +137,7 @@ func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
 	bucket string, username string, password string) (err error) {
 	connStr := "couchbase://" + hostname
 
-	c, err := gocouchbase.Connect(connStr)
+	c, err := gocb.Connect(connStr)
 	if err != nil {
 		return err
 	}
