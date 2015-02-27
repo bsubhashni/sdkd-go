@@ -24,19 +24,24 @@ type CommandData struct {
 }
 
 type Options struct {
-	OtherNodes         []string `json:"OtherNodes"`
-	Username           string   `json:"Username"`
-	ClusterCertificate string   `json:"ClusterCertificate"`
-	SSL                bool     `json:"SSL"`
-	Password           string   `json:"Password"`
-	DelayMin           int      `json:"DelayMin"`
-	ReplicateTo        int      `json:"ReplicateTo"`
-	TimeRes            int64    `json:"TimeRes"`
-	PersistTo          int      `json:"PersistTo"`
-	ReplicaRead        bool     `json:"ReplicaRead"`
-	IterWait           int      `json:"IterWait"`
-	DelayMax           int      `json:"DelayMax"`
-	Full               bool     `json:"Full"`
+	OtherNodes          []string            `json:"OtherNodes"`
+	Username            string              `json:"Username"`
+	ClusterCertificate  string              `json:"ClusterCertificate"`
+	SSL                 bool                `json:"SSL"`
+	Password            string              `json:"Password"`
+	DelayMin            int                 `json:"DelayMin"`
+	ReplicateTo         int                 `json:"ReplicateTo"`
+	TimeRes             int64               `json:"TimeRes"`
+	PersistTo           int                 `json:"PersistTo"`
+	ReplicaRead         bool                `json:"ReplicaRead"`
+	IterWait            int                 `json:"IterWait"`
+	DelayMax            int                 `json:"DelayMax"`
+	Full                bool                `json:"Full"`
+	ViewQueryCount      int                 `json:"ViewQueryCount"`
+	ViewQueryDelay      int                 `json:"ViewQueryDelay"`
+	ViewQueryParameters ViewQueryParameters `json:"ViewQueryParameters"`
+	ViewName            string              `json:"ViewName"`
+	DesignName          string              `json:"DesignName"`
 }
 
 type DS struct {
@@ -54,6 +59,14 @@ type Schema struct {
 	InflateContent string `json:"InflateContent"`
 }
 
+type ViewQueryParameters struct {
+	Limit       int  `json:"limit"`
+	Stale       bool `json:"stale"`
+	Continue    bool `json:"continue"`
+	IncludeDocs bool `json:"include_docs"`
+	Skip        bool `json:"skip"`
+}
+
 type ResponseCommand struct {
 	Command string      `json:"Command"`
 	ReqID   int         `json:"ReqID"`
@@ -66,11 +79,11 @@ type EmptyObject struct {
 }
 
 type InfoResponse struct {
-	CAPS    Caps    `json:"CAPS"`
-	CONFIG  Config  `json:"CONFIG"`
-	HEADERS Headers `json:"HEADERS"`
-	TIME    int     `json:"TIME"`
-	RUNTIME Runtime `json:"RUNTIME"`
+	CAPS    Caps       `json:"CAPS"`
+	CONFIG  Config     `json:"CONFIG"`
+	HEADERS Headers    `json:"HEADERS"`
+	TIME    int        `json:"TIME"`
+	RUNTIME SDKRuntime `json:"RUNTIME"`
 }
 
 type Caps struct {
@@ -92,7 +105,7 @@ type Headers struct {
 	SDK       string `json:"SDK"`
 }
 
-type Runtime struct {
+type SDKRuntime struct {
 	SDK string `json:"SDK"`
 }
 
