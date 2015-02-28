@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/couchbaselabs/go-couchbase"
 	"github.com/couchbaselabs/gocb"
 	"log"
 	"net/url"
+	"strconv"
 )
 
 type Handle interface {
@@ -13,6 +15,8 @@ type Handle interface {
 	CreateNewCouchbaseConnection(string, int, string, string, string) error
 	DsMutate()
 	DsGet()
+	DsViewLoad()
+	DsViewQuery()
 	GetResult() *ResultResponse
 	Cancel()
 }
@@ -22,6 +26,7 @@ type Handle_v1 struct {
 	DsIter          DatasetIterator
 	rs              *ResultSet
 	DoCancel        bool
+	Schema          ViewSchema
 }
 
 type Handle_v2 struct {
@@ -29,13 +34,16 @@ type Handle_v2 struct {
 	DsIter   DatasetIterator
 	rs       *ResultSet
 	DoCancel bool
+	Schema   ViewSchema
 }
 
 func (handle *Handle_v1) Init(ds DatasetIterator, opts *Options) {
 	handle.DsIter = ds
 	handle.rs = new(ResultSet)
 	handle.rs.Initialize()
+    handle.Schema = opts.VSchema
 }
+
 
 func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 	bucket string, username string, password string) (err error) {
@@ -46,13 +54,13 @@ func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 		u := &url.URL{
 			Scheme: "http",
 			User:   userinfo,
-			Host:   hostname + ":" + "8091",
+			Host:   hostname + ":" + strconv.Itoa(port),
 		}
 		connStr = u.String()
 	} else {
 		u := &url.URL{
 			Scheme: "http",
-			Host:   hostname + ":" + "8091",
+			Host:   hostname + ":" + strconv.Itoa(port),
 		}
 		connStr = u.String()
 	}
@@ -62,7 +70,7 @@ func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 		return err
 	}
 
-	p, err := c.GetPool("default")
+	p, err := c.GetPool(bucket)
 	if err != nil {
 		return err
 	}
@@ -114,6 +122,14 @@ func (handle *Handle_v1) DsGet() {
 
 		}
 	}
+}
+
+func (handle *Handle_v1) DsViewQuery() {
+	log.Fatalf("Not implemented in legacy couchbase sdk")
+}
+
+func (handle *Handle_v1) DsViewLoad() {
+	log.Fatalf("Not implemented in legacy couchbase sdk")
 }
 
 func (handle *Handle_v1) Cancel() {
@@ -175,6 +191,7 @@ func (handle *Handle_v2) DsGet() {
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
+		expectedVal := dsIter.Value()
 		var v string
 
 		handle.rs.MarkBegin()
@@ -183,12 +200,44 @@ func (handle *Handle_v2) DsGet() {
 
 		if err != nil {
 			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
-			handle.rs.setResCode(1, key, v, "")
+			handle.rs.setResCode(1, key, v, expectedVal)
 		} else {
-
-			handle.rs.setResCode(0, key, v, "")
+			handle.rs.setResCode(0, key, v, expectedVal)
 		}
 	}
+}
+
+func (handle *Handle_v2) DsViewLoad() {
+	dsIter := handle.DsIter
+	handle.DoCancel = false
+
+	ii := 0
+	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
+		key := dsIter.Key()
+		handle.Schema.KIdent = dsIter.Key()
+		handle.Schema.KSequence = ii
+
+		handle.rs.MarkBegin()
+
+		b, err := json.Marshal(handle.Schema)
+		if err != nil {
+			log.Fatalf("Unable to marshal schema for view load")
+		}
+
+		_, err = handle.bucket.Upsert(key, b, 0)
+
+		if err != nil {
+			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
+			handle.rs.setResCode(1, key, "", "")
+		} else {
+			handle.rs.setResCode(0, key, "", "")
+		}
+		ii++
+	}
+
+}
+
+func (handle *Handle_v2) DsViewQuery() {
 }
 
 func (handle *Handle_v2) GetResult() *ResultResponse {

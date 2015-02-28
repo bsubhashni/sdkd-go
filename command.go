@@ -4,7 +4,11 @@ const (
 	NEWHANDLE        = "NEWHANDLE"
 	MC_DS_MUTATE_SET = "MC_DS_MUTATE_SET"
 	MC_DS_MUTATE_GET = "MC_DS_MUTATE_GET"
+	CB_VIEW_QUERY    = "CB_VIEW_QUERY"
+	CB_VIEW_LOAD     = "CB_VIEW_LOAD"
 	DSTYPE_SEEDED    = "SEEDED"
+	CANCEL           = "CANCEL"
+	CLOSEHANDLE      = "CLOSEHANDLE"
 )
 
 type RequestCommand struct {
@@ -42,6 +46,7 @@ type Options struct {
 	ViewQueryParameters ViewQueryParameters `json:"ViewQueryParameters"`
 	ViewName            string              `json:"ViewName"`
 	DesignName          string              `json:"DesignName"`
+	VSchema             ViewSchema          `json:"Schema"`
 }
 
 type DS struct {
@@ -54,17 +59,20 @@ type DS struct {
 	Continuous bool   `json:"Continuous"`
 }
 
-type Schema struct {
+type ViewSchema struct {
 	InflateLevel   int    `json:"InflateLevel"`
 	InflateContent string `json:"InflateContent"`
+	KIdent         string `json:"Kident,omitEmpty"`
+	KSequence      int    `json:"KVSequence,omitEmpty"`
 }
 
 type ViewQueryParameters struct {
-	Limit       int  `json:"limit"`
+	Limit       uint `json:"limit"`
 	Stale       bool `json:"stale"`
 	Continue    bool `json:"continue"`
 	IncludeDocs bool `json:"include_docs"`
-	Skip        bool `json:"skip"`
+	Skip        uint `json:"skip"`
+	UpdateAfter bool `json:"update_after"`
 }
 
 type ResponseCommand struct {

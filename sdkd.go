@@ -4,12 +4,14 @@ import (
 	"log"
 	"net"
 	"sync"
+    "fmt"
 )
 
 type Sdkd struct {
-	Port      string
-	HandleMap map[int]*Worker
-	Mutex     sync.Mutex
+	Port          int
+	ShouldPersist bool
+	HandleMap     map[int]*Worker
+	Mutex         sync.Mutex
 }
 
 /* SDKD driver begins accept new connections */
@@ -17,7 +19,7 @@ func (sdkd *Sdkd) Start() (err error) {
 	connCount := 0
 	sdkd.HandleMap = make(map[int]*Worker)
 
-	ln, err := net.Listen("tcp", ":8050")
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", sdkd.Port))
 	if err != nil {
 		log.Fatalf("Cannot listen on port %v", err)
 	}

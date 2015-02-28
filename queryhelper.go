@@ -19,7 +19,7 @@ func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQue
 
 	if parameters.Stale == false {
 		viewquery = viewquery.Stale(gocb.Before)
-	} else if parameter.Stale == true {
+	} else if parameters.Stale == true {
 		viewquery = viewquery.Stale(gocb.None)
 	}
 
@@ -35,12 +35,12 @@ func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQue
 }
 
 func processResults(viewresults *gocb.ViewResults) error {
-	var val Value
+	//var val Value
 	for {
-		success := viewresults.Next(&val)
-		if success == false {
-			err := viewresults.Close()
-			return err
-		}
+		//success := viewresults.Next(&val)
+		//if success == false {
+		//	err := viewresults.Close()
+			return nil
+		//}
 	}
 }

@@ -62,7 +62,7 @@ func (worker *Worker) ProcessRequest() {
 
 	handle := worker.handle
 
-	if req.Command == "NEWHANDLE" {
+	if req.Command == NEWHANDLE {
 		fmt.Printf("New handle\n")
 		res.ResData = EmptyObject{}
 		var cmdData CommandData
@@ -83,12 +83,12 @@ func (worker *Worker) ProcessRequest() {
 		worker.parent.Mutex.Unlock()
 	}
 
-	if req.Command == "CANCEL" {
+	if req.Command == CANCEL {
 		fmt.Printf("Cancel Handle \n")
 		res.ResData = EmptyObject{}
 	}
 
-	if req.Command == "CLOSEHANDLE" {
+	if req.Command == CLOSEHANDLE {
 		fmt.Printf("Close Handle\n")
 		res.ResData = EmptyObject{}
 		res.Status = 0
@@ -98,12 +98,24 @@ func (worker *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-	handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options)
+	if req.Command != CB_VIEW_QUERY {
+		handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options)
+	}
 
-	if req.Command == "MC_DS_MUTATE_SET" {
+	if req.Command == MC_DS_MUTATE_SET {
 		handle.DsMutate()
 		res.ResData = handle.GetResult()
-		fmt.Printf("%v", res.ResData)
+	}
+
+	if req.Command == CB_VIEW_LOAD {
+        fmt.Printf("Options Schema %v", req.CmdData.Options.VSchema)
+		handle.DsViewLoad()
+		res.ResData = handle.GetResult()
+	}
+
+	if req.Command == CB_VIEW_QUERY {
+		handle.DsViewQuery()
+		res.ResData = handle.GetResult()
 	}
 
 	b, err := json.Marshal(res)
