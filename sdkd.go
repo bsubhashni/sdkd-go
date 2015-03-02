@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"sync"
-    "fmt"
 )
 
 type Sdkd struct {
@@ -12,6 +12,7 @@ type Sdkd struct {
 	ShouldPersist bool
 	HandleMap     map[int]*Worker
 	Mutex         sync.Mutex
+	Handle        int
 }
 
 /* SDKD driver begins accept new connections */

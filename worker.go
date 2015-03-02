@@ -165,10 +165,19 @@ func (worker *Worker) RequestHandler() {
 
 func (worker *Worker) Start(conn net.Conn) {
 	fmt.Println("Starting new worker \n")
-	var h Handle_v3
+
+	if worker.parent.Handle == 1 {
+		var h Handle_v1
+		worker.handle = &h
+	} else if worker.parent.Handle == 2 {
+		var h Handle_v2
+		worker.handle = &h
+	} else {
+		var h Handle_v3
+		worker.handle = &h
+	}
 
 	worker.Conn = conn
-	worker.handle = &h
 	worker.GotRequest = make(chan bool)
 	worker.ShouldFlush = make(chan bool)
 	worker.Quit = make(chan bool)

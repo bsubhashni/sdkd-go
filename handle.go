@@ -274,7 +274,7 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 
 	var memdHosts []string
 	var httpHosts []string
-
+    memdHosts = append(memdHosts, fmt.Sprintf("%s:11210", hostname, port))
 	httpHosts = append(httpHosts, fmt.Sprintf("%s:%d", hostname, port))
 
 	authFn := func(srv gocbcore.AuthClient) error {
