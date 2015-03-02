@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
+	"time"
 )
 
 type Control struct {
@@ -58,7 +60,10 @@ func (controller *Control) ProcessRequest() {
 	res.ReqID = req.ReqID
 
 	if req.Command == "INFO" {
-		res.ResData = InfoResponse{}
+		var info InfoResponse
+		info.TIME = uint64(time.Now().Unix())
+		res.ResData = info
+
 	}
 
 	if req.Command == "CANCEL" {
@@ -83,6 +88,10 @@ func (controller *Control) ProcessRequest() {
 		}
 		controller.parent.Mutex.Unlock()
 		res.ResData = EmptyObject{}
+
+		if controller.parent.ShouldPersist == false {
+			os.Exit(0)
+		}
 	}
 
 	b, err := json.Marshal(res)

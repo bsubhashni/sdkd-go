@@ -81,9 +81,7 @@ func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedVal
 	var win TimeWindow
 	win.ec = make(map[uint16]int)
 
-	fmt.Printf("Result set")
 	if rs.curWinTime == 0 {
-		fmt.Printf("new time window")
 		rs.curWinTime = rs.curTFrame
 		rs.winBegin = rs.curTFrame
 		rs.TimeStats = append(rs.TimeStats, win)

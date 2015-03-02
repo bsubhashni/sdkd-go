@@ -3,7 +3,7 @@ package main
 const (
 	NEWHANDLE        = "NEWHANDLE"
 	MC_DS_MUTATE_SET = "MC_DS_MUTATE_SET"
-	MC_DS_MUTATE_GET = "MC_DS_MUTATE_GET"
+	MC_DS_GET        = "MC_DS_GET"
 	CB_VIEW_QUERY    = "CB_VIEW_QUERY"
 	CB_VIEW_LOAD     = "CB_VIEW_LOAD"
 	DSTYPE_SEEDED    = "SEEDED"
@@ -90,7 +90,7 @@ type InfoResponse struct {
 	CAPS    Caps       `json:"CAPS"`
 	CONFIG  Config     `json:"CONFIG"`
 	HEADERS Headers    `json:"HEADERS"`
-	TIME    int        `json:"TIME"`
+	TIME    uint64     `json:"TIME"`
 	RUNTIME SDKRuntime `json:"RUNTIME"`
 }
 

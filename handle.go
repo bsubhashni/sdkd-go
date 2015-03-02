@@ -274,7 +274,6 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 
 	var memdHosts []string
 	var httpHosts []string
-    memdHosts = append(memdHosts, fmt.Sprintf("%s:11210", hostname, port))
 	httpHosts = append(httpHosts, fmt.Sprintf("%s:%d", hostname, port))
 
 	authFn := func(srv gocbcore.AuthClient) error {
@@ -302,18 +301,25 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 
 func (handle *Handle_v3) PostSubmit(op gocbcore.PendingOp, nsubmit uint64) {
 	handle.rs.remaining += nsubmit
-
 	if handle.rs.remaining > handle.rs.Options.IterWait {
 		time.Sleep(10)
 	}
 }
 
 func (handle *Handle_v3) StoreCallback(cas uint64, err error) {
-	handle.rs.setResCode(0, "", "", "")
+	if err != nil {
+		handle.rs.setResCode(1, "", "", "")
+	} else {
+		handle.rs.setResCode(0, "", "", "")
+	}
 }
 
 func (handle *Handle_v3) GetCallback(val []byte, ttl uint32, cas uint64, err error) {
-	handle.rs.setResCode(0, "", string(val), "")
+	if err != nil {
+		handle.rs.setResCode(1, "", string(val), "")
+	} else {
+		handle.rs.setResCode(0, "", string(val), "")
+	}
 }
 
 func (handle *Handle_v3) DsMutate() {
@@ -341,22 +347,44 @@ func (handle *Handle_v3) DsGet() {
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
 		key := dsIter.Key()
-		expectedVal := dsIter.Value()
-		var v string
 
 		handle.rs.MarkBegin()
 
 		op, err := handle.client.Get([]byte(key), handle.GetCallback)
 		if err != nil {
-			handle.rs.setResCode(1, key, v, expectedVal)
+			handle.rs.setResCode(1, key, "", "")
 		} else {
 			handle.PostSubmit(op, 1)
 		}
-
 	}
 }
 
 func (handle *Handle_v3) DsViewLoad() {
+	dsIter := handle.DsIter
+	handle.DoCancel = false
+
+	ii := 0
+	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
+		key := dsIter.Key()
+		handle.Schema.KIdent = dsIter.Key()
+		handle.Schema.KSequence = ii
+
+		handle.rs.MarkBegin()
+
+		b, err := json.Marshal(handle.Schema)
+		if err != nil {
+			log.Fatalf("Unable to marshal schema for view load")
+		}
+
+		op, err := handle.client.Set([]byte(key), b, 0, 0, handle.StoreCallback)
+
+		if err != nil {
+			handle.rs.setResCode(1, key, "", "")
+		} else {
+			handle.PostSubmit(op, 1)
+		}
+		ii++
+	}
 }
 
 func (handle *Handle_v3) DsViewQuery() {

@@ -19,3 +19,8 @@ This should create the executable sdkd-go.
 By default, the sdkd starts listening on port 8050. To listen on a different port 
 ./sdkd-go --Port 8050
 
+##Options
+--Port Port for the sdkd to listen on
+--Persist Do not exit sdkd on goodbye
+--Handle 1 - Legacy go-couchbase 2 - Gocb sync ops 3 - Use gocbcore for async ops
+

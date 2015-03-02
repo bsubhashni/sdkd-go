@@ -47,7 +47,7 @@ func (worker *Worker) ReadRequest() {
 
 func (worker *Worker) ProcessRequest() {
 	buf := worker.InBuf
-	fmt.Printf("Got Message %s", string(buf))
+	fmt.Printf("Got Message on worker %s \n", string(buf))
 
 	var req RequestCommand
 	var res ResponseCommand
@@ -107,6 +107,11 @@ func (worker *Worker) ProcessRequest() {
 		res.ResData = handle.GetResult()
 	}
 
+    if req.Command == MC_DS_GET {
+        handle.DsGet()
+        res.ResData = handle.GetResult()
+    }
+
 	if req.Command == CB_VIEW_LOAD {
 		handle.DsViewLoad()
 		res.ResData = handle.GetResult()
@@ -116,6 +121,10 @@ func (worker *Worker) ProcessRequest() {
 		handle.DsViewQuery()
 		res.ResData = handle.GetResult()
 	}
+
+    if res.ResData == nil {
+        res.ResData = EmptyObject{}
+    }
 
 	b, err := json.Marshal(res)
 	if err != nil {
