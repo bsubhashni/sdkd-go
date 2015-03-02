@@ -58,7 +58,7 @@ func (rs *ResultSet) MarkBegin() {
 }
 
 func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedValue string) {
-	//rs.remaining--
+	rs.remaining--
 	rs.Stats[rc]++
 
 	if rs.Options.Full == true {
@@ -81,7 +81,9 @@ func (rs *ResultSet) setResCode(rc uint16, key string, value string, expectedVal
 	var win TimeWindow
 	win.ec = make(map[uint16]int)
 
+	fmt.Printf("Result set")
 	if rs.curWinTime == 0 {
+		fmt.Printf("new time window")
 		rs.curWinTime = rs.curTFrame
 		rs.winBegin = rs.curTFrame
 		rs.TimeStats = append(rs.TimeStats, win)
@@ -117,10 +119,13 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 		return
 	}
 
+	res.Timings = new(Timings)
 	res.Timings.Base = rs.winBegin
 	res.Timings.Step = rs.Options.TimeRes
 
 	fmt.Printf("Time step %v", res.Timings.Step)
+
+	var windows []Window
 
 	for _, winstat := range rs.TimeStats {
 		win := Window{}
@@ -136,7 +141,15 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 		for rc, count := range winstat.ec {
 			win.Errors[strconv.Itoa(int(rc))] = count
 		}
-		res.Timings.Windows = append(res.Timings.Windows, win)
+		windows = append(windows, win)
+	}
+
+	if len(windows) == 0 {
+		fmt.Printf("windows exist \n")
+		res.Timings.Windows = EmptyObject{}
+	} else {
+		fmt.Printf("windows donot exist \n")
+		res.Timings.Windows = windows
 	}
 
 }

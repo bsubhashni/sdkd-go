@@ -99,7 +99,7 @@ func (worker *Worker) ProcessRequest() {
 
 	//Create Dataset Iterator
 	if req.Command != CB_VIEW_QUERY {
-		handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options)
+		handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options, req.CmdData.VSchema)
 	}
 
 	if req.Command == MC_DS_MUTATE_SET {
@@ -108,7 +108,6 @@ func (worker *Worker) ProcessRequest() {
 	}
 
 	if req.Command == CB_VIEW_LOAD {
-        fmt.Printf("Options Schema %v", req.CmdData.Options.VSchema)
 		handle.DsViewLoad()
 		res.ResData = handle.GetResult()
 	}
@@ -166,7 +165,7 @@ func (worker *Worker) RequestHandler() {
 
 func (worker *Worker) Start(conn net.Conn) {
 	fmt.Println("Starting new worker \n")
-	var h Handle_v2
+	var h Handle_v3
 
 	worker.Conn = conn
 	worker.handle = &h

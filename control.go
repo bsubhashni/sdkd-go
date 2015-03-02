@@ -82,6 +82,7 @@ func (controller *Control) ProcessRequest() {
 			worker.Quit <- true
 		}
 		controller.parent.Mutex.Unlock()
+		res.ResData = EmptyObject{}
 	}
 
 	b, err := json.Marshal(res)

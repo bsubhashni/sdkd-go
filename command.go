@@ -19,12 +19,13 @@ type RequestCommand struct {
 }
 
 type CommandData struct {
-	DSType   string  `json:"DSType,omitempty"`
-	DS       DS      `json:"DS,omitempty"`
-	Options  Options `json:"Options,omitempty"`
-	Bucket   string  `json:"Bucket,omitempty"`
-	Port     int     `json:"Port,omitempty"`
-	Hostname string  `json:"Hostname,omitempty"`
+	DSType   string     `json:"DSType,omitempty"`
+	DS       DS         `json:"DS,omitempty"`
+	Options  Options    `json:"Options,omitempty"`
+	Bucket   string     `json:"Bucket,omitempty"`
+	Port     int        `json:"Port,omitempty"`
+	Hostname string     `json:"Hostname,omitempty"`
+	VSchema  ViewSchema `json:"Schema,omitempty"`
 }
 
 type Options struct {
@@ -38,7 +39,7 @@ type Options struct {
 	TimeRes             int64               `json:"TimeRes"`
 	PersistTo           int                 `json:"PersistTo"`
 	ReplicaRead         bool                `json:"ReplicaRead"`
-	IterWait            int                 `json:"IterWait"`
+	IterWait            uint64              `json:"IterWait"`
 	DelayMax            int                 `json:"DelayMax"`
 	Full                bool                `json:"Full"`
 	ViewQueryCount      int                 `json:"ViewQueryCount"`
@@ -46,7 +47,6 @@ type Options struct {
 	ViewQueryParameters ViewQueryParameters `json:"ViewQueryParameters"`
 	ViewName            string              `json:"ViewName"`
 	DesignName          string              `json:"DesignName"`
-	VSchema             ViewSchema          `json:"Schema"`
 }
 
 type DS struct {
@@ -119,13 +119,13 @@ type SDKRuntime struct {
 
 type ResultResponse struct {
 	Summary map[string]int `json:"Summary"`
-	Timings Timings        `json:"Timings"`
+	Timings *Timings       `json:"Timings,omitempty"`
 }
 
 type Timings struct {
-	Base    int64    `json:"Base"`
-	Step    int64    `json:"Step"`
-	Windows []Window `json:"Windows"`
+	Base    int64       `json:"Base"`
+	Step    int64       `json:"Step"`
+	Windows interface{} `json:"Windows"`
 }
 
 type Window struct {
