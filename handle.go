@@ -226,7 +226,7 @@ func (handle *Handle_v2) DsGet() {
 
 		handle.rs.MarkBegin()
 
-		_, _, err := handle.bucket.Get(key, v)
+		_, err := handle.bucket.Get(key, v)
 
 		if err != nil {
 			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
@@ -301,7 +301,7 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 	var httpHosts []string
 	httpHosts = append(httpHosts, fmt.Sprintf("%s:%d", hostname, port))
 
-	authFn := func(srv gocbcore.AuthClient) error {
+	authFn := func(srv gocbcore.AuthClient, deadline time.Time) error {
 		// Build PLAIN auth data
 		userBuf := []byte(bucket)
 		passBuf := []byte(password)
@@ -312,11 +312,20 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 		copy(authData[1+len(userBuf)+1:], passBuf)
 
 		//Execute PLAIN authentication
-		_, err := srv.ExecSaslAuth([]byte("PLAIN"), authData)
+		t := time.Now()
+		_, err := srv.ExecSaslAuth([]byte("PLAIN"), authData, t.Add(time.Second))
 		return err
 	}
 
-	handle.client, err = gocbcore.CreateAgent(memdHosts, httpHosts, false, bucket, password, authFn)
+	config := gocbcore.AgentConfig{
+		MemdAddrs:   memdHosts,
+		HttpAddrs:   httpHosts,
+		BucketName:  bucket,
+		Password:    password,
+		AuthHandler: authFn,
+	}
+
+	handle.client, err = gocbcore.CreateAgent(&config)
 	if err != nil {
 		return err
 	}
@@ -331,7 +340,7 @@ func (handle *Handle_v3) PostSubmit(op gocbcore.PendingOp, nsubmit uint64) {
 	}
 }
 
-func (handle *Handle_v3) StoreCallback(cas uint64, err error) {
+func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, err error) {
 	if err != nil {
 		handle.rs.setResCode(1, "", "", "")
 	} else {
@@ -339,7 +348,7 @@ func (handle *Handle_v3) StoreCallback(cas uint64, err error) {
 	}
 }
 
-func (handle *Handle_v3) GetCallback(val []byte, ttl uint32, cas uint64, err error) {
+func (handle *Handle_v3) GetCallback(val []byte, ttl uint32, cas gocbcore.Cas, err error) {
 	if err != nil {
 		handle.rs.setResCode(1, "", string(val), "")
 	} else {
