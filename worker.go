@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"runtime"
 )
 
 type Worker struct {
@@ -19,10 +20,17 @@ type Worker struct {
 	handle      Handle
 	CloseConn   chan bool
 	Quit        chan bool
+	logger      *Logger
 }
 
-func (worker *Worker) ReadRequest() {
-	rdr := bufio.NewReader(worker.Conn)
+func (w *Worker) prettify(msg string) string {
+	_, file, line, _ := runtime.Caller(0)
+	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
+	return msg
+}
+
+func (w *Worker) ReadRequest() {
+	rdr := bufio.NewReader(w.Conn)
 
 	for {
 		buf := make([]byte, 1024)
@@ -32,38 +40,40 @@ func (worker *Worker) ReadRequest() {
 			if err == io.EOF {
 				return
 			} else {
-				log.Fatalf("Error reading from Worker Socket %v", err)
+				log.Fatalf(w.prettify("Error reading from Worker Socket %v"), err)
 			}
 		}
 		if bytesRead == 0 {
-			log.Fatalf("Remote has closed the connection")
+			log.Fatalf(w.prettify("Remote has closed the connection"))
 		}
-		fmt.Printf("Reading %d bytes from worker socket \n", bytesRead)
-		worker.GotRequest <- true
-		worker.InBuf = buf[:bytesRead]
+		w.logger.Info("Reading %d bytes from worker socket", bytesRead)
+
+		w.GotRequest <- true
+		w.InBuf = buf[:bytesRead]
 	}
 
 }
 
-func (worker *Worker) ProcessRequest() {
-	buf := worker.InBuf
-	fmt.Printf("Got Message on worker %s \n", string(buf))
+func (w *Worker) ProcessRequest() {
+	buf := w.InBuf
+	w.logger.Info("Got Message on worker %s", string(buf))
 
 	var req RequestCommand
 	var res ResponseCommand
 
 	if err := json.Unmarshal(buf, &req); err != nil {
-		fmt.Printf("Cannot unmarshal command %v %v \n", err, req)
+		w.logger.Error(w.prettify("Cannot unmarshal command %v %v"), err, req)
 	}
 
 	res.Command = req.Command
 	res.Handle = req.Handle
 	res.ReqID = req.ReqID
 
-	handle := worker.handle
+	handle := w.handle
 
 	if req.Command == NEWHANDLE {
-		fmt.Printf("New handle\n")
+		w.logger.Info("Creating a new handle")
+
 		res.ResData = EmptyObject{}
 		var cmdData CommandData
 		cmdData = req.CmdData
@@ -72,34 +82,39 @@ func (worker *Worker) ProcessRequest() {
 			cmdData.Bucket,
 			cmdData.Options.Username,
 			cmdData.Options.Password); err != nil {
-			fmt.Printf("Error establishing couchbase connection %v \n", err)
+			w.logger.Error(w.prettify("Error establishing couchbase connection %v"), err)
 			res.Status = 1
 		} else {
 			res.Status = 0
 		}
 
-		worker.parent.Mutex.Lock()
-		worker.parent.HandleMap[req.Handle] = worker
-		worker.parent.Mutex.Unlock()
+		w.parent.Mutex.Lock()
+		w.parent.HandleMap[req.Handle] = w
+		w.parent.Mutex.Unlock()
 	}
 
 	if req.Command == CANCEL {
-		fmt.Printf("Cancel Handle \n")
+		w.logger.Info("Cancelling handle")
+
 		res.ResData = EmptyObject{}
 	}
 
 	if req.Command == CLOSEHANDLE {
-		fmt.Printf("Close Handle\n")
+		w.logger.Info("Closing handle")
+
 		res.ResData = EmptyObject{}
 		res.Status = 0
-		worker.parent.Mutex.Lock()
-		delete(worker.parent.HandleMap, req.ReqID)
-		worker.parent.Mutex.Unlock()
+		w.parent.Mutex.Lock()
+		delete(w.parent.HandleMap, req.ReqID)
+		w.parent.Mutex.Unlock()
 	}
 
 	//Create Dataset Iterator
 	if req.Command != CB_VIEW_QUERY {
-		handle.Init(getDatasetIterator(req.CmdData.DS), &req.CmdData.Options, req.CmdData.VSchema)
+		handle.Init(getDatasetIterator(req.CmdData.DS),
+			&req.CmdData.Options,
+			req.CmdData.VSchema,
+			w.parent.logger)
 	}
 
 	if req.Command == MC_DS_MUTATE_SET {
@@ -107,10 +122,10 @@ func (worker *Worker) ProcessRequest() {
 		res.ResData = handle.GetResult()
 	}
 
-    if req.Command == MC_DS_GET {
-        handle.DsGet()
-        res.ResData = handle.GetResult()
-    }
+	if req.Command == MC_DS_GET {
+		handle.DsGet()
+		res.ResData = handle.GetResult()
+	}
 
 	if req.Command == CB_VIEW_LOAD {
 		handle.DsViewLoad()
@@ -122,76 +137,76 @@ func (worker *Worker) ProcessRequest() {
 		res.ResData = handle.GetResult()
 	}
 
-    if res.ResData == nil {
-        res.ResData = EmptyObject{}
-    }
+	if res.ResData == nil {
+		res.ResData = EmptyObject{}
+	}
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		fmt.Printf("Unable to marshal %s response", res.Command)
+		w.logger.Error(w.prettify("Unable to marshal %s response"), res.Command)
 	}
-	worker.OutBuf = b
-	fmt.Printf("Worker out buffer %s \n", string(b))
+	w.OutBuf = b
+	w.logger.Debug(w.prettify("Worker out buffer %s"), string(b))
 
-	worker.ShouldFlush <- true
+	w.ShouldFlush <- true
 
 	if req.Command == "CLOSEHANDLE" {
-		worker.Quit <- true
+		w.Quit <- true
 	}
 }
 
-func (worker *Worker) WriteResponse() {
-	buf := worker.OutBuf
+func (w *Worker) WriteResponse() {
+	buf := w.OutBuf
 
 	out := string(buf) + "\n"
 	for {
-		bytesWritten, err := worker.Conn.Write([]byte(out))
+		bytesWritten, err := w.Conn.Write([]byte(out))
 
 		if err != nil {
 			log.Fatalf("writing to worker socket errored")
 		}
 		if bytesWritten == len([]byte(out)) {
-			fmt.Printf("Successfully wrote on worker socket %s \n", string(buf))
+			w.logger.Debug(w.prettify("Successfully wrote on worker socket %s"), string(buf))
 			break
 		}
 	}
 }
 
-func (worker *Worker) RequestHandler() {
+func (w *Worker) RequestHandler() {
 	for {
 		select {
-		case <-worker.GotRequest:
-			go worker.ProcessRequest()
-		case <-worker.ShouldFlush:
-			go worker.WriteResponse()
-		case <-worker.Quit:
-			worker.Conn.Close()
+		case <-w.GotRequest:
+			go w.ProcessRequest()
+		case <-w.ShouldFlush:
+			go w.WriteResponse()
+		case <-w.Quit:
+			w.Conn.Close()
 			break
 		default:
 		}
 	}
 }
 
-func (worker *Worker) Start(conn net.Conn) {
-	fmt.Println("Starting new worker \n")
+func (w *Worker) Start(conn net.Conn) {
+	w.logger.Debug("Starting new worker")
 
-	if worker.parent.Handle == 1 {
+	if w.parent.Handle == 1 {
 		var h Handle_v1
-		worker.handle = &h
-	} else if worker.parent.Handle == 2 {
+		w.handle = &h
+	} else if w.parent.Handle == 2 {
 		var h Handle_v2
-		worker.handle = &h
+		w.handle = &h
 	} else {
 		var h Handle_v3
-		worker.handle = &h
+		w.handle = &h
 	}
 
-	worker.Conn = conn
-	worker.GotRequest = make(chan bool)
-	worker.ShouldFlush = make(chan bool)
-	worker.Quit = make(chan bool)
+	w.Conn = conn
+	w.GotRequest = make(chan bool)
+	w.ShouldFlush = make(chan bool)
+	w.Quit = make(chan bool)
 
-	go worker.ReadRequest()
-	go worker.RequestHandler()
+	go w.ReadRequest()
+	go w.RequestHandler()
 
 }

@@ -34,13 +34,13 @@ func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQue
 	return viewquery
 }
 
-func processResults(viewresults *gocb.ViewResults) error {
-	//var val Value
+func processResults(viewresults gocb.ViewResults) error {
+	var val Value
 	for {
-		//success := viewresults.Next(&val)
-		//if success == false {
-		//	err := viewresults.Close()
+		success := viewresults.Next(&val)
+		if success == false {
+			_ = viewresults.Close()
 			return nil
-		//}
+		}
 	}
 }

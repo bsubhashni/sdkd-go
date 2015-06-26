@@ -13,6 +13,7 @@ type Sdkd struct {
 	HandleMap     map[int]*Worker
 	Mutex         sync.Mutex
 	Handle        int
+	logger        *Logger
 }
 
 /* SDKD driver begins accept new connections */
@@ -35,10 +36,12 @@ func (sdkd *Sdkd) Start() (err error) {
 			connCount++
 			control := new(Control)
 			control.parent = sdkd
+			control.logger = sdkd.logger
 			go control.Start(conn)
 		} else {
 			worker := new(Worker)
 			worker.parent = sdkd
+			worker.logger = sdkd.logger
 			go worker.Start(conn)
 		}
 	}

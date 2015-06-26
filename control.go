@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
+	"runtime"
 )
 
 type Control struct {
@@ -19,10 +19,17 @@ type Control struct {
 	GotRequest  chan bool
 	ShouldFlush chan bool
 	Quit        chan bool
+	logger      *Logger
 }
 
-func (controller *Control) ReadRequest() {
-	rdr := bufio.NewReader(controller.Conn)
+func (controller *Control) prettify(msg string) string {
+	_, file, line, _ := runtime.Caller(0)
+	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
+	return msg
+}
+
+func (c *Control) ReadRequest() {
+	rdr := bufio.NewReader(c.Conn)
 
 	for {
 		buf := make([]byte, 1024)
@@ -32,36 +39,36 @@ func (controller *Control) ReadRequest() {
 			if err == io.EOF {
 				return
 			} else {
-				log.Fatalf("Error reading from Control Socket %v \n", err)
+				log.Fatalf("Error reading from Control Socket %v", err)
 			}
 		}
 
 		if bytesRead == 0 {
-			fmt.Printf("Remote has closed the connection \n")
-			controller.Quit <- true
+			c.logger.Error(c.prettify("Remote has closed the connection"))
+			c.Quit <- true
 		}
-		fmt.Printf("Reading %d bytes from control socket \n", bytesRead)
-		controller.GotRequest <- true
-		controller.InBuf = buf[:bytesRead]
+		c.logger.Debug(c.prettify("Reading %d bytes from control socket"), bytesRead)
+		c.GotRequest <- true
+		c.InBuf = buf[:bytesRead]
 	}
 }
 
-func (controller *Control) ProcessRequest() {
-	buf := controller.InBuf
+func (c *Control) ProcessRequest() {
+	buf := c.InBuf
 
 	var req RequestCommand
 	var res ResponseCommand
 	if err := json.Unmarshal(buf, &req); err != nil {
-		fmt.Printf("Cannot unmarshal command %v %v \n", err, req)
+		c.logger.Error(c.prettify("Cannot unmarshal command %v %v"), err, req)
 	}
 
-	fmt.Printf("Got message %s %s", string(buf), req.Command)
+	c.logger.Debug(c.prettify("Got message %s %s"), string(buf), req.Command)
 	res.Command = req.Command
 	res.ReqID = req.ReqID
 
 	if req.Command == "INFO" {
 		var info InfoResponse
-		info.TIME = uint64(time.Now().Unix())
+		//info.TIME = uint64(time.Now().Unix())
 		res.ResData = info
 
 	}
@@ -70,81 +77,81 @@ func (controller *Control) ProcessRequest() {
 		//cancels the handle sent on request
 		res.Handle = req.Handle
 		res.ResData = EmptyObject{}
-		controller.parent.Mutex.Lock()
-		if controller.parent.HandleMap == nil {
+		c.parent.Mutex.Lock()
+		if c.parent.HandleMap == nil {
 			log.Fatalf("Cannot find the requested handle to cancel\n")
 		} else {
-			controller.parent.HandleMap[req.Handle].handle.Cancel()
+			c.parent.HandleMap[req.Handle].handle.Cancel()
 		}
-		controller.parent.Mutex.Unlock()
+		c.parent.Mutex.Unlock()
 	}
 
 	if req.Command == "GOODBYE" {
 		//close all handles
-		controller.parent.Mutex.Lock()
-		for handleid, worker := range controller.parent.HandleMap {
-			fmt.Printf("Sending kill signal to handle worker %d", handleid)
+		c.parent.Mutex.Lock()
+		for handleid, worker := range c.parent.HandleMap {
+			c.logger.Debug(prettify("Sending kill signal to handle worker %d"), handleid)
 			worker.Quit <- true
 		}
-		controller.parent.Mutex.Unlock()
+		c.parent.Mutex.Unlock()
 		res.ResData = EmptyObject{}
 
-		if controller.parent.ShouldPersist == false {
+		if c.parent.ShouldPersist == false {
 			os.Exit(0)
 		}
 	}
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		fmt.Printf("Unable to marshal info response \n")
+		c.logger.Error(c.prettify("Unable to marshal info response"))
 	} else {
-		controller.OutBuf = b
+		c.OutBuf = b
 	}
-	controller.ShouldFlush <- true
+	c.ShouldFlush <- true
 }
 
-func (controller *Control) WriteResponse() {
-	buf := controller.OutBuf
+func (c *Control) WriteResponse() {
+	buf := c.OutBuf
 
 	out := string(buf) + "\n"
 
 	for {
-		bytesWritten, err := controller.Conn.Write([]byte(out))
+		bytesWritten, err := c.Conn.Write([]byte(out))
 
 		if err != nil {
 			log.Fatalf("Writing to control socket errored %v", err)
 		}
 
 		if bytesWritten == len([]byte(out)) {
-			fmt.Printf("Successfully wrote %s \n", out)
-			controller.OutBuf = []byte{}
+			c.logger.Debug(c.prettify("Successfully wrote %s"), out)
+			c.OutBuf = []byte{}
 			break
 		}
 	}
 }
 
-func (controller *Control) RequestHandler() {
+func (c *Control) RequestHandler() {
 	for {
 		select {
-		case <-controller.GotRequest:
-			go controller.ProcessRequest()
-		case <-controller.ShouldFlush:
-			go controller.WriteResponse()
-		case <-controller.Quit:
+		case <-c.GotRequest:
+			go c.ProcessRequest()
+		case <-c.ShouldFlush:
+			go c.WriteResponse()
+		case <-c.Quit:
 			break
 		default:
 		}
 	}
 }
 
-func (controller *Control) Start(conn net.Conn) {
-	fmt.Println("Starting Controller \n")
+func (c *Control) Start(conn net.Conn) {
+	c.logger.Info("Starting Controller")
 
-	controller.Conn = conn
-	controller.GotRequest = make(chan bool)
-	controller.ShouldFlush = make(chan bool)
+	c.Conn = conn
+	c.GotRequest = make(chan bool)
+	c.ShouldFlush = make(chan bool)
 
-	go controller.ReadRequest()
-	go controller.RequestHandler()
+	go c.ReadRequest()
+	go c.RequestHandler()
 
 }

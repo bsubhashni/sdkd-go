@@ -8,12 +8,13 @@ import (
 	"github.com/couchbaselabs/gocb/gocbcore"
 	"log"
 	"net/url"
+	"runtime"
 	"strconv"
 	"time"
 )
 
 type Handle interface {
-	Init(DatasetIterator, *Options, ViewSchema)
+	Init(DatasetIterator, *Options, ViewSchema, *Logger)
 	CreateNewCouchbaseConnection(string, int, string, string, string) error
 	DsMutate()
 	DsGet()
@@ -29,6 +30,7 @@ type Handle_v1 struct {
 	rs              *ResultSet
 	DoCancel        bool
 	Schema          ViewSchema
+	logger          *Logger
 }
 
 type Handle_v2 struct {
@@ -37,6 +39,7 @@ type Handle_v2 struct {
 	rs       *ResultSet
 	DoCancel bool
 	Schema   ViewSchema
+	logger   *Logger
 }
 
 type Handle_v3 struct {
@@ -45,13 +48,21 @@ type Handle_v3 struct {
 	rs       *ResultSet
 	DoCancel bool
 	Schema   ViewSchema
+	logger   *Logger
 }
 
-func (handle *Handle_v1) Init(ds DatasetIterator, opts *Options, schema ViewSchema) {
+func prettify(msg string) string {
+	_, file, line, _ := runtime.Caller(1)
+	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
+	return msg
+}
+
+func (handle *Handle_v1) Init(ds DatasetIterator, opts *Options, schema ViewSchema, logger *Logger) {
 	handle.DsIter = ds
 	handle.rs = new(ResultSet)
 	handle.rs.Initialize()
 	handle.Schema = schema
+	handle.logger = logger
 }
 
 func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
@@ -95,7 +106,8 @@ func (handle *Handle_v1) CreateNewCouchbaseConnection(hostname string, port int,
 			return err
 		}
 	}
-	fmt.Printf("Successfully instantiated connection \n")
+
+	handle.logger.Info("Successfully instantiated connection")
 	return nil
 }
 
@@ -151,18 +163,26 @@ func (handle *Handle_v1) GetResult() *ResultResponse {
 	return res
 }
 
-func (handle *Handle_v2) Init(dsIter DatasetIterator, opts *Options, schema ViewSchema) {
+func (handle *Handle_v2) Init(dsIter DatasetIterator,
+	opts *Options,
+	schema ViewSchema,
+	logger *Logger) {
+
 	handle.DsIter = dsIter
 	handle.rs = new(ResultSet)
 	handle.rs.Initialize()
 	handle.rs.Options = opts
 	handle.Schema = schema
+	handle.logger = logger
 }
 
-func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string, port int,
-	bucket string, username string, password string) (err error) {
-	connStr := "couchbase://" + hostname
+func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string,
+	port int,
+	bucket string,
+	username string,
+	password string) (err error) {
 
+	connStr := "couchbase://" + hostname
 	c, err := gocb.Connect(connStr)
 	if err != nil {
 		return err
@@ -261,12 +281,17 @@ func (handle *Handle_v2) Cancel() {
 	handle.DoCancel = true
 }
 
-func (handle *Handle_v3) Init(ds DatasetIterator, opts *Options, schema ViewSchema) {
+func (handle *Handle_v3) Init(ds DatasetIterator,
+	opts *Options,
+	schema ViewSchema,
+	logger *Logger) {
+
 	handle.DsIter = ds
 	handle.rs = new(ResultSet)
 	handle.rs.Initialize()
 	handle.rs.Options = opts
 	handle.Schema = schema
+	handle.logger = logger
 }
 
 func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
@@ -388,6 +413,7 @@ func (handle *Handle_v3) DsViewLoad() {
 }
 
 func (handle *Handle_v3) DsViewQuery() {
+
 }
 
 func (handle *Handle_v3) GetResult() *ResultResponse {
