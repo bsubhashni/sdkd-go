@@ -34,13 +34,14 @@ type Options struct {
 	ClusterCertificate  string              `json:"ClusterCertificate"`
 	SSL                 bool                `json:"SSL"`
 	Password            string              `json:"Password"`
-	DelayMin            int                 `json:"DelayMin"`
 	ReplicateTo         int                 `json:"ReplicateTo"`
 	TimeRes             int64               `json:"TimeRes"`
 	PersistTo           int                 `json:"PersistTo"`
 	ReplicaRead         bool                `json:"ReplicaRead"`
 	IterWait            uint64              `json:"IterWait"`
 	DelayMax            int                 `json:"DelayMax"`
+	DelayMin            int                 `json:"DelayMin"`
+	DSType              string              `json:"DSType"`
 	Full                bool                `json:"Full"`
 	ViewQueryCount      int                 `json:"ViewQueryCount"`
 	ViewQueryDelay      int                 `json:"ViewQueryDelay"`

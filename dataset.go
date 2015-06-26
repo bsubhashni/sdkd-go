@@ -59,7 +59,6 @@ func (ds *DatasetSeededIterator) initData() {
 
 func (ds *DatasetSeededIterator) Advance() bool {
 	if ds.spec.Continuous && ds.curidx > ds.spec.Count {
-		fmt.Printf("Resetting idx \n")
 		ds.curidx = 0
 	}
 	ds.initData()
@@ -72,7 +71,6 @@ func (ds *DatasetSeededIterator) Done() bool {
 	}
 
 	if ds.curidx >= ds.spec.Count {
-		fmt.Printf("Greater than count - returning false\n")
 		return true
 	}
 

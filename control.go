@@ -3,12 +3,10 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"runtime"
 )
 
 type Control struct {
@@ -20,12 +18,6 @@ type Control struct {
 	ShouldFlush chan bool
 	Quit        chan bool
 	logger      *Logger
-}
-
-func (controller *Control) prettify(msg string) string {
-	_, file, line, _ := runtime.Caller(0)
-	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
-	return msg
 }
 
 func (c *Control) ReadRequest() {
@@ -44,10 +36,10 @@ func (c *Control) ReadRequest() {
 		}
 
 		if bytesRead == 0 {
-			c.logger.Error(c.prettify("Remote has closed the connection"))
+			c.logger.Error(prettify() + "Remote has closed the connection")
 			c.Quit <- true
 		}
-		c.logger.Debug(c.prettify("Reading %d bytes from control socket"), bytesRead)
+		c.logger.Debug(prettify()+"Reading %d bytes from control socket", bytesRead)
 		c.GotRequest <- true
 		c.InBuf = buf[:bytesRead]
 	}
@@ -59,10 +51,10 @@ func (c *Control) ProcessRequest() {
 	var req RequestCommand
 	var res ResponseCommand
 	if err := json.Unmarshal(buf, &req); err != nil {
-		c.logger.Error(c.prettify("Cannot unmarshal command %v %v"), err, req)
+		c.logger.Error(prettify()+"Cannot unmarshal command %v %v", err, req)
 	}
 
-	c.logger.Debug(c.prettify("Got message %s %s"), string(buf), req.Command)
+	c.logger.Debug(prettify()+"Got message %v", req.Command)
 	res.Command = req.Command
 	res.ReqID = req.ReqID
 
@@ -90,7 +82,7 @@ func (c *Control) ProcessRequest() {
 		//close all handles
 		c.parent.Mutex.Lock()
 		for handleid, worker := range c.parent.HandleMap {
-			c.logger.Debug(prettify("Sending kill signal to handle worker %d"), handleid)
+			c.logger.Debug(prettify()+"Sending kill signal to handle worker %d", handleid)
 			worker.Quit <- true
 		}
 		c.parent.Mutex.Unlock()
@@ -103,7 +95,7 @@ func (c *Control) ProcessRequest() {
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		c.logger.Error(c.prettify("Unable to marshal info response"))
+		c.logger.Error(prettify() + "Unable to marshal info response")
 	} else {
 		c.OutBuf = b
 	}
@@ -123,7 +115,7 @@ func (c *Control) WriteResponse() {
 		}
 
 		if bytesWritten == len([]byte(out)) {
-			c.logger.Debug(c.prettify("Successfully wrote %s"), out)
+			c.logger.Debug(prettify()+"Successfully wrote %s", out)
 			c.OutBuf = []byte{}
 			break
 		}

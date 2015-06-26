@@ -51,9 +51,9 @@ type Handle_v3 struct {
 	logger   *Logger
 }
 
-func prettify(msg string) string {
+func prettify() string {
 	_, file, line, _ := runtime.Caller(1)
-	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
+	msg := fmt.Sprintf("%v(%v):", file, line)
 	return msg
 }
 
@@ -226,10 +226,9 @@ func (handle *Handle_v2) DsGet() {
 
 		handle.rs.MarkBegin()
 
-		_, err := handle.bucket.Get(key, v)
+		_, err := handle.bucket.Get(key, &v)
 
 		if err != nil {
-			log.Fatalf("Cannot get items using handle v2 %v %v \n", err, key)
 			handle.rs.setResCode(1, key, v, expectedVal)
 		} else {
 			handle.rs.setResCode(0, key, v, expectedVal)

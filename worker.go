@@ -3,11 +3,9 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"runtime"
 )
 
 type Worker struct {
@@ -23,12 +21,6 @@ type Worker struct {
 	logger      *Logger
 }
 
-func (w *Worker) prettify(msg string) string {
-	_, file, line, _ := runtime.Caller(0)
-	msg = fmt.Sprintf("%v(%v):"+msg, file, line)
-	return msg
-}
-
 func (w *Worker) ReadRequest() {
 	rdr := bufio.NewReader(w.Conn)
 
@@ -40,11 +32,11 @@ func (w *Worker) ReadRequest() {
 			if err == io.EOF {
 				return
 			} else {
-				log.Fatalf(w.prettify("Error reading from Worker Socket %v"), err)
+				log.Fatalf(prettify()+"Error reading from Worker Socket %v", err)
 			}
 		}
 		if bytesRead == 0 {
-			log.Fatalf(w.prettify("Remote has closed the connection"))
+			log.Fatalf(prettify() + "Remote has closed the connection")
 		}
 		w.logger.Info("Reading %d bytes from worker socket", bytesRead)
 
@@ -62,7 +54,7 @@ func (w *Worker) ProcessRequest() {
 	var res ResponseCommand
 
 	if err := json.Unmarshal(buf, &req); err != nil {
-		w.logger.Error(w.prettify("Cannot unmarshal command %v %v"), err, req)
+		w.logger.Error(prettify()+"Cannot unmarshal command %v %v", err, buf)
 	}
 
 	res.Command = req.Command
@@ -82,7 +74,7 @@ func (w *Worker) ProcessRequest() {
 			cmdData.Bucket,
 			cmdData.Options.Username,
 			cmdData.Options.Password); err != nil {
-			w.logger.Error(w.prettify("Error establishing couchbase connection %v"), err)
+			w.logger.Error(prettify()+"Error establishing couchbase connection %v", err)
 			res.Status = 1
 		} else {
 			res.Status = 0
@@ -143,10 +135,10 @@ func (w *Worker) ProcessRequest() {
 
 	b, err := json.Marshal(res)
 	if err != nil {
-		w.logger.Error(w.prettify("Unable to marshal %s response"), res.Command)
+		w.logger.Error(prettify()+"Unable to marshal %s response", res.Command)
 	}
 	w.OutBuf = b
-	w.logger.Debug(w.prettify("Worker out buffer %s"), string(b))
+	w.logger.Debug(prettify()+"Worker out buffer %s", string(b))
 
 	w.ShouldFlush <- true
 
@@ -166,7 +158,7 @@ func (w *Worker) WriteResponse() {
 			log.Fatalf("writing to worker socket errored")
 		}
 		if bytesWritten == len([]byte(out)) {
-			w.logger.Debug(w.prettify("Successfully wrote on worker socket %s"), string(buf))
+			w.logger.Debug(prettify()+"Successfully wrote on worker socket %s", string(buf))
 			break
 		}
 	}
