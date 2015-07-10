@@ -29,7 +29,6 @@ type CommandData struct {
 }
 
 type Options struct {
-	OtherNodes          []string            `json:"OtherNodes"`
 	Username            string              `json:"Username"`
 	ClusterCertificate  string              `json:"ClusterCertificate"`
 	SSL                 bool                `json:"SSL"`
@@ -41,7 +40,6 @@ type Options struct {
 	IterWait            uint64              `json:"IterWait"`
 	DelayMax            int                 `json:"DelayMax"`
 	DelayMin            int                 `json:"DelayMin"`
-	DSType              string              `json:"DSType"`
 	Full                bool                `json:"Full"`
 	ViewQueryCount      int                 `json:"ViewQueryCount"`
 	ViewQueryDelay      int                 `json:"ViewQueryDelay"`
