@@ -4,12 +4,6 @@ import (
 	"github.com/couchbaselabs/gocb"
 )
 
-type Value struct {
-	Id    string `json:"Id"`
-	Key   string `json:"Key"`
-	Value string `json:"Value"`
-}
-
 func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQuery {
 	viewquery := gocb.NewViewQuery(dname, vname)
 
@@ -35,12 +29,12 @@ func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQue
 }
 
 func processResults(viewresults gocb.ViewResults) error {
-	var val Value
+	var val interface{}
 	for {
 		success := viewresults.Next(&val)
 		if success == false {
-			_ = viewresults.Close()
-			return nil
+			err := viewresults.Close()
+			return err
 		}
 	}
 }

@@ -10,7 +10,7 @@ func main() {
 	persist := flag.Bool("Persist", false, "Persist the SDKD[Do not kill on GOODBYE]")
 	handleType := flag.Int("Handle", 3, "Type of the sdk handle to use: "+
 		"1. Legacy SDK "+
-		"2.Synchronous "+
+		"2. Synchronous "+
 		"3. Asynchronous")
 	logFile := flag.String("LogFile", "", "Log file for sdkd")
 	logLevel := flag.Int("LogLevel", 2, "Log level for sdkd")

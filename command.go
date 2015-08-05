@@ -19,33 +19,33 @@ type RequestCommand struct {
 }
 
 type CommandData struct {
-	DSType   string     `json:"DSType,omitempty"`
-	DS       DS         `json:"DS,omitempty"`
-	Options  Options    `json:"Options,omitempty"`
-	Bucket   string     `json:"Bucket,omitempty"`
-	Port     int        `json:"Port,omitempty"`
-	Hostname string     `json:"Hostname,omitempty"`
-	VSchema  ViewSchema `json:"Schema,omitempty"`
-}
-
-type Options struct {
-	Username            string              `json:"Username"`
-	ClusterCertificate  string              `json:"ClusterCertificate"`
-	SSL                 bool                `json:"SSL"`
-	Password            string              `json:"Password"`
-	ReplicateTo         int                 `json:"ReplicateTo"`
-	TimeRes             int64               `json:"TimeRes"`
-	PersistTo           int                 `json:"PersistTo"`
-	ReplicaRead         bool                `json:"ReplicaRead"`
-	IterWait            uint64              `json:"IterWait"`
-	DelayMax            int                 `json:"DelayMax"`
-	DelayMin            int                 `json:"DelayMin"`
-	Full                bool                `json:"Full"`
-	ViewQueryCount      int                 `json:"ViewQueryCount"`
-	ViewQueryDelay      int                 `json:"ViewQueryDelay"`
+	DSType              string              `json:"DSType,omitempty"`
+	DS                  DS                  `json:"DS,omitempty"`
+	Options             Options             `json:"Options,omitempty"`
+	Bucket              string              `json:"Bucket,omitempty"`
+	Port                int                 `json:"Port,omitempty"`
+	Hostname            string              `json:"Hostname,omitempty"`
+	VSchema             ViewSchema          `json:"Schema,omitempty"`
 	ViewQueryParameters ViewQueryParameters `json:"ViewQueryParameters"`
 	ViewName            string              `json:"ViewName"`
 	DesignName          string              `json:"DesignName"`
+}
+
+type Options struct {
+	Username           string `json:"Username"`
+	ClusterCertificate string `json:"ClusterCertificate"`
+	SSL                bool   `json:"SSL"`
+	Password           string `json:"Password"`
+	ReplicateTo        int    `json:"ReplicateTo"`
+	TimeRes            int64  `json:"TimeRes"`
+	PersistTo          int    `json:"PersistTo"`
+	ReplicaRead        bool   `json:"ReplicaRead"`
+	IterWait           uint64 `json:"IterWait"`
+	DelayMax           int    `json:"DelayMax"`
+	DelayMin           int    `json:"DelayMin"`
+	Full               bool   `json:"Full"`
+	ViewQueryCount     int    `json:"ViewQueryCount"`
+	ViewQueryDelay     int    `json:"ViewQueryDelay"`
 }
 
 type DS struct {
@@ -61,7 +61,7 @@ type DS struct {
 type ViewSchema struct {
 	InflateLevel   int    `json:"InflateLevel"`
 	InflateContent string `json:"InflateContent"`
-	KIdent         string `json:"Kident,omitEmpty"`
+	KIdent         string `json:"KIdent,omitEmpty"`
 	KSequence      int    `json:"KVSequence,omitEmpty"`
 }
 

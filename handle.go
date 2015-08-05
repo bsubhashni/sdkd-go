@@ -19,7 +19,9 @@ type Handle interface {
 	DsMutate()
 	DsGet()
 	DsViewLoad()
-	DsViewQuery()
+	DsViewQuery(string, string, ViewQueryParameters)
+	DsN1QLCreateIndex()
+	DsN1QLQuery()
 	GetResult() *ResultResponse
 	Cancel()
 }
@@ -145,11 +147,19 @@ func (handle *Handle_v1) DsGet() {
 	}
 }
 
-func (handle *Handle_v1) DsViewQuery() {
+func (handle *Handle_v1) DsViewQuery(designName string, viewName string, viewQueryParameters ViewQueryParameters) {
 	log.Fatalf("Not implemented in legacy couchbase sdk")
 }
 
 func (handle *Handle_v1) DsViewLoad() {
+	log.Fatalf("Not implemented in legacy couchbase sdk")
+}
+
+func (handle *Handle_v1) DsN1QLCreateIndex() {
+	log.Fatalf("Not implemented in legacy couchbase sdk")
+}
+
+func (handle *Handle_v1) DsN1QLQuery() {
 	log.Fatalf("Not implemented in legacy couchbase sdk")
 }
 
@@ -266,8 +276,23 @@ func (handle *Handle_v2) DsViewLoad() {
 
 }
 
-func (handle *Handle_v2) DsViewQuery() {
+func (handle *Handle_v2) DsViewQuery(designName string, viewName string, viewQueryParameters ViewQueryParameters) {
+	for handle.DoCancel == false {
+		vq := GetQuery(designName, viewName, viewQueryParameters)
+		results := handle.bucket.ExecuteViewQuery(vq)
+		err := processResults(results)
+		if err != nil {
+			handle.rs.setResCode(1, "", "", "")
+		} else {
+			handle.rs.setResCode(0, "", "", "")
+		}
+	}
+}
 
+func (handle *Handle_v2) DsN1QLCreateIndex() {
+}
+
+func (handle *Handle_v2) DsN1QLQuery() {
 }
 
 func (handle *Handle_v2) GetResult() *ResultResponse {
@@ -420,8 +445,13 @@ func (handle *Handle_v3) DsViewLoad() {
 	}
 }
 
-func (handle *Handle_v3) DsViewQuery() {
+func (handle *Handle_v3) DsViewQuery(designName string, viewName string, viewQueryParameters ViewQueryParameters) {
+}
 
+func (handle *Handle_v3) DsN1QLCreateIndex() {
+}
+
+func (handle *Handle_v3) DsN1QLQuery() {
 }
 
 func (handle *Handle_v3) GetResult() *ResultResponse {

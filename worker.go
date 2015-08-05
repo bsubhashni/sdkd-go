@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -87,13 +88,11 @@ func (w *Worker) ProcessRequest() {
 
 	if req.Command == CANCEL {
 		w.logger.Info("Cancelling handle")
-
 		res.ResData = EmptyObject{}
 	}
 
 	if req.Command == CLOSEHANDLE {
 		w.logger.Info("Closing handle")
-
 		res.ResData = EmptyObject{}
 		res.Status = 0
 		w.parent.Mutex.Lock()
@@ -102,12 +101,10 @@ func (w *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-	if req.Command != CB_VIEW_QUERY {
-		handle.Init(getDatasetIterator(req.CmdData.DS),
-			&req.CmdData.Options,
-			req.CmdData.VSchema,
-			w.parent.logger)
-	}
+	handle.Init(getDatasetIterator(req.CmdData.DS),
+		&req.CmdData.Options,
+		req.CmdData.VSchema,
+		w.parent.logger)
 
 	if req.Command == MC_DS_MUTATE_SET {
 		handle.DsMutate()
@@ -125,7 +122,8 @@ func (w *Worker) ProcessRequest() {
 	}
 
 	if req.Command == CB_VIEW_QUERY {
-		handle.DsViewQuery()
+		fmt.Printf("\ndesign name worker %v %v", req.CmdData.DesignName, req.CmdData.ViewName)
+		handle.DsViewQuery(req.CmdData.DesignName, req.CmdData.ViewName, req.CmdData.ViewQueryParameters)
 		res.ResData = handle.GetResult()
 	}
 
