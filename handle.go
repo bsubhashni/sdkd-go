@@ -36,12 +36,13 @@ type Handle_v1 struct {
 }
 
 type Handle_v2 struct {
-	bucket   *gocb.Bucket
-	DsIter   DatasetIterator
-	rs       *ResultSet
-	DoCancel bool
-	Schema   ViewSchema
-	logger   *Logger
+	bucket     *gocb.Bucket
+	DsIter     DatasetIterator
+	rs         *ResultSet
+	DoCancel   bool
+	Schema     ViewSchema
+	logger     *Logger
+	bucketName string
 }
 
 type Handle_v3 struct {
@@ -202,6 +203,8 @@ func (handle *Handle_v2) CreateNewCouchbaseConnection(hostname string,
 	if err != nil {
 		return err
 	}
+	handle.bucketName = bucket
+	gocbcore.SetLogger(gocbcore.DefaultStdOutLogger())
 	return nil
 }
 
@@ -217,7 +220,7 @@ func (handle *Handle_v2) DsMutate() {
 
 		_, err := handle.bucket.Upsert(key, val, 0)
 		if err != nil {
-			//log.Fatalf("Cannot set items using handle v2 %v %v %v\n", err, key, val)
+			handle.logger.Debug("Set error %v\n", err)
 			handle.rs.setResCode(1, key, val, "")
 		} else {
 			handle.rs.setResCode(0, key, val, "")
@@ -239,6 +242,7 @@ func (handle *Handle_v2) DsGet() {
 		_, err := handle.bucket.Get(key, &v)
 
 		if err != nil {
+			handle.logger.Debug("Get error %v\n", err)
 			handle.rs.setResCode(1, key, v, expectedVal)
 		} else {
 			handle.rs.setResCode(0, key, v, expectedVal)
@@ -278,7 +282,7 @@ func (handle *Handle_v2) DsViewLoad() {
 
 func (handle *Handle_v2) DsViewQuery(designName string, viewName string, viewQueryParameters ViewQueryParameters) {
 	for handle.DoCancel == false {
-		vq := GetQuery(designName, viewName, viewQueryParameters)
+		vq := GetViewQuery(designName, viewName, viewQueryParameters)
 		results := handle.bucket.ExecuteViewQuery(vq)
 		err := processResults(results)
 		if err != nil {
@@ -290,9 +294,30 @@ func (handle *Handle_v2) DsViewQuery(designName string, viewName string, viewQue
 }
 
 func (handle *Handle_v2) DsN1QLCreateIndex() {
+	statement := "CREATE PRIMARY INDEX ON `" + handle.bucketName + "`"
+	nq := GetN1QLQuery(statement, "not_bounded")
+	results := handle.bucket.ExecuteN1qlQuery(nq, nil)
+	err := results.Close()
+	if err != nil {
+        handle.logger.Debug("Error creating index %v", err)
+		handle.rs.setResCode(1, "", "", "")
+	} else {
+		handle.rs.setResCode(0, "", "", "")
+	}
 }
 
 func (handle *Handle_v2) DsN1QLQuery() {
+	for handle.DoCancel == false {
+		statement := "SELECT * FROM `" + handle.bucketName + "`"
+		nq := GetN1QLQuery(statement, "not_bounded")
+		results := handle.bucket.ExecuteN1qlQuery(nq, nil)
+		err := results.Close()
+		if err != nil {
+			handle.rs.setResCode(1, "", "", "")
+		} else {
+			handle.rs.setResCode(0, "", "", "")
+		}
+	}
 }
 
 func (handle *Handle_v2) GetResult() *ResultResponse {
@@ -353,7 +378,7 @@ func (handle *Handle_v3) CreateNewCouchbaseConnection(hostname string, port int,
 	if err != nil {
 		return err
 	}
-
+	gocbcore.SetLogger(gocbcore.DefaultStdOutLogger())
 	return err
 }
 
@@ -365,8 +390,10 @@ func (handle *Handle_v3) PostSubmit(op gocbcore.PendingOp, nsubmit uint64) {
 }
 
 func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, err error) {
+	fmt.Printf("Store callback %v \n", err)
 	if err != nil {
 		handle.rs.setResCode(1, "", "", "")
+
 	} else {
 		handle.rs.setResCode(0, "", "", "")
 	}
@@ -383,14 +410,16 @@ func (handle *Handle_v3) GetCallback(val []byte, ttl uint32, cas gocbcore.Cas, e
 func (handle *Handle_v3) DsMutate() {
 	dsIter := handle.DsIter
 	handle.DoCancel = false
+	fmt.Printf("Starting ds mutate")
 
 	for dsIter.Start(); dsIter.Done() == false && handle.DoCancel == false; dsIter.Advance() {
+
 		key := dsIter.Key()
 		val := dsIter.Value()
-
 		handle.rs.MarkBegin()
 
 		op, err := handle.client.Set([]byte(key), []byte(val), 0, 0, handle.StoreCallback)
+		fmt.Printf("Error %v \n", err)
 		if err != nil {
 			handle.rs.setResCode(1, key, val, "")
 		} else {

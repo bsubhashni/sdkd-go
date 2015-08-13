@@ -122,8 +122,17 @@ func (w *Worker) ProcessRequest() {
 	}
 
 	if req.Command == CB_VIEW_QUERY {
-		fmt.Printf("\ndesign name worker %v %v", req.CmdData.DesignName, req.CmdData.ViewName)
 		handle.DsViewQuery(req.CmdData.DesignName, req.CmdData.ViewName, req.CmdData.ViewQueryParameters)
+		res.ResData = handle.GetResult()
+	}
+
+	if req.Command == CB_N1QL_CREATE_INDEX {
+		handle.DsN1QLCreateIndex()
+		res.ResData = handle.GetResult()
+	}
+
+	if req.Command == CB_N1QL_QUERY {
+		handle.DsN1QLQuery()
 		res.ResData = handle.GetResult()
 	}
 
@@ -153,7 +162,8 @@ func (w *Worker) WriteResponse() {
 		bytesWritten, err := w.Conn.Write([]byte(out))
 
 		if err != nil {
-			log.Fatalf("writing to worker socket errored")
+			//log.Fatalf("writing to worker socket errored")
+			return
 		}
 		if bytesWritten == len([]byte(out)) {
 			w.logger.Debug(prettify()+"Successfully wrote on worker socket %s", string(buf))

@@ -1,14 +1,16 @@
 package main
 
 const (
-	NEWHANDLE        = "NEWHANDLE"
-	MC_DS_MUTATE_SET = "MC_DS_MUTATE_SET"
-	MC_DS_GET        = "MC_DS_GET"
-	CB_VIEW_QUERY    = "CB_VIEW_QUERY"
-	CB_VIEW_LOAD     = "CB_VIEW_LOAD"
-	DSTYPE_SEEDED    = "SEEDED"
-	CANCEL           = "CANCEL"
-	CLOSEHANDLE      = "CLOSEHANDLE"
+	NEWHANDLE            = "NEWHANDLE"
+	MC_DS_MUTATE_SET     = "MC_DS_MUTATE_SET"
+	MC_DS_GET            = "MC_DS_GET"
+	CB_VIEW_QUERY        = "CB_VIEW_QUERY"
+	CB_VIEW_LOAD         = "CB_VIEW_LOAD"
+	CB_N1QL_CREATE_INDEX = "CB_N1QL_CREATE_INDEX"
+	CB_N1QL_QUERY        = "CB_N1QL_QUERY"
+	DSTYPE_SEEDED        = "SEEDED"
+	CANCEL               = "CANCEL"
+	CLOSEHANDLE          = "CLOSEHANDLE"
 )
 
 type RequestCommand struct {

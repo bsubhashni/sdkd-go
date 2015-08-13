@@ -4,7 +4,7 @@ import (
 	"github.com/couchbaselabs/gocb"
 )
 
-func GetQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQuery {
+func GetViewQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQuery {
 	viewquery := gocb.NewViewQuery(dname, vname)
 
 	if parameters.Limit > 0 {
@@ -37,4 +37,10 @@ func processResults(viewresults gocb.ViewResults) error {
 			return err
 		}
 	}
+}
+
+func GetN1QLQuery(statement string, scanconsistency string) *gocb.N1qlQuery {
+	n1qlQuery := gocb.NewN1qlQuery(statement)
+	n1qlQuery.Consistency(gocb.NotBounded)
+	return n1qlQuery
 }

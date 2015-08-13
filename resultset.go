@@ -121,7 +121,6 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 	res.Timings.Base = rs.winBegin
 	res.Timings.Step = rs.Options.TimeRes
 
-	fmt.Printf("Time step %v", res.Timings.Step)
 
 	var windows []Window
 
@@ -143,10 +142,10 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 	}
 
 	if len(windows) == 0 {
-		fmt.Printf("windows exist \n")
+		fmt.Printf("Windows donot exist. Time step %v\n", res.Timings.Step)
 		res.Timings.Windows = EmptyObject{}
 	} else {
-		fmt.Printf("windows donot exist \n")
+		fmt.Printf("Windows exist. Time step %v\n", res.Timings.Step)
 		res.Timings.Windows = windows
 	}
 
