@@ -220,7 +220,7 @@ func (handle *Handle_v2) DsMutate() {
 
 		_, err := handle.bucket.Upsert(key, val, 0)
 		if err != nil {
-			handle.logger.Debug("Set error %v\n", err)
+			handle.logger.Debug("Set error %v", err)
 			handle.rs.setResCode(1, key, val, "")
 		} else {
 			handle.rs.setResCode(0, key, val, "")
@@ -242,7 +242,7 @@ func (handle *Handle_v2) DsGet() {
 		_, err := handle.bucket.Get(key, &v)
 
 		if err != nil {
-			handle.logger.Debug("Get error %v\n", err)
+			handle.logger.Debug("Get error %v", err)
 			handle.rs.setResCode(1, key, v, expectedVal)
 		} else {
 			handle.rs.setResCode(0, key, v, expectedVal)
@@ -299,7 +299,7 @@ func (handle *Handle_v2) DsN1QLCreateIndex() {
 	results := handle.bucket.ExecuteN1qlQuery(nq, nil)
 	err := results.Close()
 	if err != nil {
-        handle.logger.Debug("Error creating index %v", err)
+		handle.logger.Debug("Error creating index %v", err)
 		handle.rs.setResCode(1, "", "", "")
 	} else {
 		handle.rs.setResCode(0, "", "", "")
@@ -307,12 +307,18 @@ func (handle *Handle_v2) DsN1QLCreateIndex() {
 }
 
 func (handle *Handle_v2) DsN1QLQuery() {
+	i := 0
 	for handle.DoCancel == false {
+		key := fmt.Sprintf("%d", i)
+		val := fmt.Sprintf("%d", i)
+		_, err := handle.bucket.Upsert(key, val, 0)
+		i++
 		statement := "SELECT * FROM `" + handle.bucketName + "`"
 		nq := GetN1QLQuery(statement, "not_bounded")
 		results := handle.bucket.ExecuteN1qlQuery(nq, nil)
-		err := results.Close()
+		err = results.Close()
 		if err != nil {
+			handle.logger.Debug("Error querying %v", err)
 			handle.rs.setResCode(1, "", "", "")
 		} else {
 			handle.rs.setResCode(0, "", "", "")

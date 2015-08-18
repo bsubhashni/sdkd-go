@@ -88,11 +88,13 @@ type EmptyObject struct {
 }
 
 type InfoResponse struct {
-	CAPS    Caps       `json:"CAPS"`
-	CONFIG  Config     `json:"CONFIG"`
-	HEADERS Headers    `json:"HEADERS"`
-	TIME    uint64     `json:"TIME"`
-	RUNTIME SDKRuntime `json:"RUNTIME"`
+	CAPS      Caps       `json:"CAPS"`
+	CONFIG    Config     `json:"CONFIG"`
+	HEADERS   Headers    `json:"HEADERS"`
+	TIME      uint64     `json:"TIME"`
+	RUNTIME   SDKRuntime `json:"RUNTIME"`
+	SDK       string     `json:"SDK"`
+	Changeset string     `json:"CHANGESET"`
 }
 
 type Caps struct {

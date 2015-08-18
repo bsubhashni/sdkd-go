@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
 )
 
 type Control struct {
@@ -45,6 +46,14 @@ func (c *Control) ReadRequest() {
 	}
 }
 
+func (c *Control) getVersionInfo() string {
+	out, err := exec.Command("cat", os.Getenv("GOPATH")+"/src/github.com/couchbaselabs/gocb/.git/refs/heads/master").Output()
+	if err != nil {
+		log.Fatalf("Failed getting version info of sdk %v", err)
+	}
+	return string(out)
+}
+
 func (c *Control) ProcessRequest() {
 	buf := c.InBuf
 
@@ -60,7 +69,8 @@ func (c *Control) ProcessRequest() {
 
 	if req.Command == "INFO" {
 		var info InfoResponse
-		//info.TIME = uint64(time.Now().Unix())
+		info.Changeset = c.getVersionInfo()
+		info.SDK = "GO"
 		res.ResData = info
 
 	}
