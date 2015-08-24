@@ -47,7 +47,8 @@ func (c *Control) ReadRequest() {
 }
 
 func (c *Control) getVersionInfo() string {
-	out, err := exec.Command("cat", os.Getenv("GOPATH")+"/src/github.com/couchbaselabs/gocb/.git/refs/heads/master").Output()
+	wd, err := os.Getwd()
+	out, err := exec.Command("cat", wd+"/../sdkd-go/src/github.com/couchbaselabs/gocb/.git/refs/heads/master").Output()
 	if err != nil {
 		log.Fatalf("Failed getting version info of sdk %v", err)
 	}
