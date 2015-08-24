@@ -69,7 +69,7 @@ func (c *Control) ProcessRequest() {
 
 	if req.Command == "INFO" {
 		var info InfoResponse
-		info.Changeset = c.getVersionInfo()
+		info.Changeset = "1.0.0"
 		info.SDK = "GO"
 		res.ResData = info
 

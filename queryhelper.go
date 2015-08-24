@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/couchbaselabs/gocb"
+	"github.com/brett19/gocb"
 )
 
 func GetViewQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQuery {

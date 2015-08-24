@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/couchbaselabs/go-couchbase"
-	"github.com/couchbaselabs/gocb"
-	"github.com/couchbaselabs/gocb/gocbcore"
+	"github.com/brett19/gocb"
+	"github.com/brett19/gocb/gocbcore"
 	"log"
 	"net/url"
 	"runtime"
@@ -395,7 +395,7 @@ func (handle *Handle_v3) PostSubmit(op gocbcore.PendingOp, nsubmit uint64) {
 	}
 }
 
-func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, err error) {
+func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, token gocbcore.MutationToken, err error) {
 	fmt.Printf("Store callback %v \n", err)
 	if err != nil {
 		handle.rs.setResCode(1, "", "", "")
