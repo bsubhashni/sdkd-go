@@ -105,7 +105,7 @@ func (w *Worker) ProcessRequest() {
 		req.CmdData.VSchema,
 		w.parent.logger)
 
-	if req.Command == MC_DS_MUTATE_SET {
+	if req.Command == MC_DS_MUTATE_SET || req.Command == MC_DS_MUTATE_REPLACE {
 		handle.DsMutate()
 		res.ResData = handle.GetResult()
 	}

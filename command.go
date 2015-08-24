@@ -3,6 +3,7 @@ package main
 const (
 	NEWHANDLE            = "NEWHANDLE"
 	MC_DS_MUTATE_SET     = "MC_DS_MUTATE_SET"
+	MC_DS_MUTATE_REPLACE = "MC_DS_MUTATE_REPLACE"
 	MC_DS_GET            = "MC_DS_GET"
 	CB_VIEW_QUERY        = "CB_VIEW_QUERY"
 	CB_VIEW_LOAD         = "CB_VIEW_LOAD"
