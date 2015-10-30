@@ -283,7 +283,7 @@ func (handle *Handle_v2) DsViewLoad() {
 func (handle *Handle_v2) DsViewQuery(designName string, viewName string, viewQueryParameters ViewQueryParameters) {
 	for handle.DoCancel == false {
 		vq := GetViewQuery(designName, viewName, viewQueryParameters)
-		results := handle.bucket.ExecuteViewQuery(vq)
+		results, _ := handle.bucket.ExecuteViewQuery(vq)
 		err := processResults(results)
 		if err != nil {
 			handle.rs.setResCode(1, "", "", "")
@@ -296,7 +296,7 @@ func (handle *Handle_v2) DsViewQuery(designName string, viewName string, viewQue
 func (handle *Handle_v2) DsN1QLCreateIndex() {
 	statement := "CREATE PRIMARY INDEX ON `" + handle.bucketName + "`"
 	nq := GetN1QLQuery(statement, "not_bounded")
-	results := handle.bucket.ExecuteN1qlQuery(nq, nil)
+	results, _ := handle.bucket.ExecuteN1qlQuery(nq, nil)
 	err := results.Close()
 	if err != nil {
 		handle.logger.Debug("Error creating index %v", err)
@@ -315,8 +315,9 @@ func (handle *Handle_v2) DsN1QLQuery() {
 		i++
 		statement := "SELECT * FROM `" + handle.bucketName + "`"
 		nq := GetN1QLQuery(statement, "not_bounded")
-		results := handle.bucket.ExecuteN1qlQuery(nq, nil)
+		results, _ := handle.bucket.ExecuteN1qlQuery(nq, nil)
 		err = results.Close()
+
 		if err != nil {
 			handle.logger.Debug("Error querying %v", err)
 			handle.rs.setResCode(1, "", "", "")
@@ -395,7 +396,7 @@ func (handle *Handle_v3) PostSubmit(op gocbcore.PendingOp, nsubmit uint64) {
 	}
 }
 
-func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, err error) {
+func (handle *Handle_v3) StoreCallback(cas gocbcore.Cas, token gocbcore.MutationToken, err error) {
 	fmt.Printf("Store callback %v \n", err)
 	if err != nil {
 		handle.rs.setResCode(1, "", "", "")
