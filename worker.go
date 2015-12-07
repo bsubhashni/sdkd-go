@@ -100,7 +100,7 @@ func (w *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-	handle.Init(getDatasetIterator(req.CmdData.DS),
+	handle.Init(getDatasetIterator(req.CmdData.DS, req.CmdData.DSType),
 		&req.CmdData.Options,
 		req.CmdData.VSchema,
 		w.parent.logger)

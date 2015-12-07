@@ -104,6 +104,10 @@ func (c *Control) ProcessRequest() {
 		}
 	}
 
+    if req.Command == "UPLOADLOGS" {
+        res.ResData = EmptyObject{}
+    }
+
 	b, err := json.Marshal(res)
 	if err != nil {
 		c.logger.Error(prettify() + "Unable to marshal info response")

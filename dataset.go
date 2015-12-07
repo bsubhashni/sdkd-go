@@ -12,6 +12,7 @@ type DatasetIterator interface {
 	Done() bool
 	Key() string
 	Value() string
+	SetSpec(spec DS)
 }
 
 type DatasetSeededIterator struct {
@@ -21,8 +22,18 @@ type DatasetSeededIterator struct {
 	curidx int
 }
 
-func getDatasetIterator(spec DS) DatasetIterator {
-	ds := new(DatasetSeededIterator)
+type DatasetN1QLIterator struct {
+	spec   DS
+	curk   string
+	curv   string
+	curidx int
+}
+
+func getDatasetIterator(spec DS, dstype string) DatasetIterator {
+	var ds DatasetIterator
+	if dstype == "DSTYPE_SEEDED" {
+		ds = new(DatasetSeededIterator)
+	}
 	ds.SetSpec(spec)
 	return ds
 }

@@ -313,7 +313,7 @@ func (handle *Handle_v2) DsN1QLQuery() {
 		val := fmt.Sprintf("%d", i)
 		_, err := handle.bucket.Upsert(key, val, 0)
 		i++
-		statement := "SELECT * FROM `" + handle.bucketName + "`"
+		statement := "PREPARE SELECT * FROM `" + handle.bucketName + "`"
 		nq := GetN1QLQuery(statement, "not_bounded")
 		results, _ := handle.bucket.ExecuteN1qlQuery(nq, nil)
 		err = results.Close()
