@@ -48,9 +48,9 @@ func (c *Control) ReadRequest() {
 
 func (c *Control) getVersionInfo() string {
 	wd, err := os.Getwd()
-	out, err := exec.Command("cat", wd+"/../sdkd-go/src/github.com/couchbaselabs/gocb/.git/refs/heads/master").Output()
+	out, err := exec.Command("cat", wd+"/../sdkd-go/src/github.com/couchbase/gocb/.git/refs/heads/master").Output()
 	if err != nil {
-		log.Fatalf("Failed getting version info of sdk %v", err)
+		c.logger.Debug("Failed getting version info of sdk %v", err)
 	}
 	return string(out)
 }
@@ -104,9 +104,9 @@ func (c *Control) ProcessRequest() {
 		}
 	}
 
-    if req.Command == "UPLOADLOGS" {
-        res.ResData = EmptyObject{}
-    }
+	if req.Command == "UPLOADLOGS" {
+		res.ResData = EmptyObject{}
+	}
 
 	b, err := json.Marshal(res)
 	if err != nil {

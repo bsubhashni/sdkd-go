@@ -49,6 +49,12 @@ type Options struct {
 	Full               bool   `json:"Full"`
 	ViewQueryCount     int    `json:"ViewQueryCount"`
 	ViewQueryDelay     int    `json:"ViewQueryDelay"`
+	NQParams           string `json:"NQParam"`
+	NQParamValues      string `json:"NQParamValues"`
+	NQIndexEngine      string `json:"NQIndexEngine"`
+	NQDefaultIndexName string `json:"NQDefaultIndexName"`
+	NQCount            int    `json:"NQCount"`
+	NQIndexType        string `json:"NQIndexType"`
 }
 
 type DS struct {

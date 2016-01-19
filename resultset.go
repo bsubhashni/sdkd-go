@@ -121,7 +121,6 @@ func (rs *ResultSet) ResultsJson(res *ResultResponse) {
 	res.Timings.Base = rs.winBegin
 	res.Timings.Step = rs.Options.TimeRes
 
-
 	var windows []Window
 
 	for _, winstat := range rs.TimeStats {

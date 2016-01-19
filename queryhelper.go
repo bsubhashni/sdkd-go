@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/couchbaselabs/gocb"
+	"github.com/couchbase/gocb"
 )
 
 func GetViewQuery(dname, vname string, parameters ViewQueryParameters) *gocb.ViewQuery {
@@ -41,5 +41,13 @@ func processResults(viewresults gocb.ViewResults) error {
 
 func GetN1QLQuery(statement string, scanconsistency string) *gocb.N1qlQuery {
 	n1qlQuery := gocb.NewN1qlQuery(statement)
+	n1qlQuery.AdHoc(false)
+	if scanconsistency == "not_bounded" {
+		n1qlQuery.Consistency(gocb.NotBounded)
+	} else if scanconsistency == "request_plus" {
+		n1qlQuery.Consistency(gocb.RequestPlus)
+	} else if scanconsistency == "statement_plus" {
+		n1qlQuery.Consistency(gocb.StatementPlus)
+	}
 	return n1qlQuery
 }

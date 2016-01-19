@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/couchbase/gocb"
+	"github.com/couchbase/gocb/gocbcore"
 	"github.com/couchbaselabs/go-couchbase"
-	"github.com/couchbaselabs/gocb"
-	"github.com/couchbaselabs/gocb/gocbcore"
 	"log"
 	"net/url"
 	"runtime"
@@ -126,7 +126,6 @@ func (handle *Handle_v1) DsMutate() {
 		err := handle.couchbaseBucket.Set(key, 0, val)
 		if err != nil {
 			log.Fatalf("Cannot set items: %v key %v value %v \n", err, key, val)
-
 		}
 	}
 }
@@ -299,11 +298,21 @@ func (handle *Handle_v2) DsN1QLCreateIndex() {
 	results, _ := handle.bucket.ExecuteN1qlQuery(nq, nil)
 	err := results.Close()
 	if err != nil {
-		handle.logger.Debug("Error creating index %v", err)
-		handle.rs.setResCode(1, "", "", "")
-	} else {
-		handle.rs.setResCode(0, "", "", "")
+		goto error
 	}
+	if handle.rs.Options.NQIndexType == "secondary" {
+		statement = "CREATE INDEX " + handle.rs.Options.NQDefaultIndexName + " ON `"
+		statement += handle.bucketName + "`(" + handle.rs.Options.NQParams + ")"
+		nq = GetN1QLQuery(statement, "not_bounded")
+		results, _ = handle.bucket.ExecuteN1qlQuery(nq, nil)
+		err := results.Close()
+		if err != nil {
+			goto error
+		}
+	}
+
+error:
+	handle.logger.Debug("Error creating index %v", err)
 }
 
 func (handle *Handle_v2) DsN1QLQuery() {
@@ -313,7 +322,7 @@ func (handle *Handle_v2) DsN1QLQuery() {
 		val := fmt.Sprintf("%d", i)
 		_, err := handle.bucket.Upsert(key, val, 0)
 		i++
-		statement := "PREPARE SELECT * FROM `" + handle.bucketName + "`"
+		statement := "SELECT * FROM `" + handle.bucketName + "`"
 		nq := GetN1QLQuery(statement, "not_bounded")
 		results, _ := handle.bucket.ExecuteN1qlQuery(nq, nil)
 		err = results.Close()

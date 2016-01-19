@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/couchbase/gocb/gocbcore"
 )
 
 func main() {
@@ -21,6 +22,7 @@ func main() {
 
 	logger := new(Logger)
 	logger.Init(*logFile, *logLevel)
+	gocbcore.SetLogger(logger)
 
 	sdkd := Sdkd{
 		Port:          *port,

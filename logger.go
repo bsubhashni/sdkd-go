@@ -16,6 +16,11 @@ const (
 	INFO  = 1
 	DEBUG = 2
 )
+const (
+	SDKDERROR = "[SdkdError]"
+	SDKDINFO  = "[SdkdInfo]"
+	SDKDDEBUG = "[SdkdDebug]"
+)
 
 func (l *Logger) Init(file string, level int) {
 	var fp *os.File
@@ -44,18 +49,23 @@ func (l *Logger) printf(prefix string, format string, v ...interface{}) {
 
 func (l *Logger) Info(format string, v ...interface{}) {
 	if l.level >= INFO {
-		l.printf("INFO:", format, v...)
+		l.printf(SDKDINFO, format, v...)
 	}
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.level >= DEBUG {
-		l.printf("DEBUG:", format, v...)
+		l.printf(SDKDDEBUG, format, v...)
 	}
 }
 
 func (l *Logger) Error(format string, v ...interface{}) {
 	if l.level >= ERR {
-		l.printf("ERROR:", format, v...)
+		l.printf(SDKDERROR, format, v...)
 	}
+}
+
+func (l *Logger) Output(message string) error {
+	l.printf("", message)
+	return nil
 }

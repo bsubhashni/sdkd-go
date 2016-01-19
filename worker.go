@@ -83,11 +83,13 @@ func (w *Worker) ProcessRequest() {
 		w.parent.Mutex.Lock()
 		w.parent.HandleMap[req.Handle] = w
 		w.parent.Mutex.Unlock()
+		goto sendresponse
 	}
 
 	if req.Command == CANCEL {
 		w.logger.Info("Cancelling handle")
 		res.ResData = EmptyObject{}
+		goto sendresponse
 	}
 
 	if req.Command == CLOSEHANDLE {
@@ -97,9 +99,11 @@ func (w *Worker) ProcessRequest() {
 		w.parent.Mutex.Lock()
 		delete(w.parent.HandleMap, req.ReqID)
 		w.parent.Mutex.Unlock()
+		goto sendresponse
 	}
 
 	//Create Dataset Iterator
+
 	handle.Init(getDatasetIterator(req.CmdData.DS, req.CmdData.DSType),
 		&req.CmdData.Options,
 		req.CmdData.VSchema,
@@ -135,6 +139,7 @@ func (w *Worker) ProcessRequest() {
 		res.ResData = handle.GetResult()
 	}
 
+sendresponse:
 	if res.ResData == nil {
 		res.ResData = EmptyObject{}
 	}
