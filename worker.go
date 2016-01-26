@@ -39,16 +39,15 @@ func (w *Worker) ReadRequest() {
 			log.Fatalf(prettify() + "Remote has closed the connection")
 		}
 		w.logger.Info("Reading %d bytes from worker socket", bytesRead)
-
-		w.GotRequest <- true
+		w.logger.Debug(string(buf[:bytesRead]))
 		w.InBuf = buf[:bytesRead]
+		w.GotRequest <- true
 	}
 
 }
 
 func (w *Worker) ProcessRequest() {
 	buf := w.InBuf
-	w.logger.Info("Got Message on worker %s", string(buf))
 
 	var req RequestCommand
 	var res ResponseCommand
@@ -103,7 +102,6 @@ func (w *Worker) ProcessRequest() {
 	}
 
 	//Create Dataset Iterator
-
 	handle.Init(getDatasetIterator(req.CmdData.DS, req.CmdData.DSType),
 		&req.CmdData.Options,
 		req.CmdData.VSchema,

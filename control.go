@@ -41,8 +41,8 @@ func (c *Control) ReadRequest() {
 			c.Quit <- true
 		}
 		c.logger.Debug(prettify()+"Reading %d bytes from control socket", bytesRead)
-		c.GotRequest <- true
 		c.InBuf = buf[:bytesRead]
+		c.GotRequest <- true
 	}
 }
 
@@ -67,6 +67,10 @@ func (c *Control) ProcessRequest() {
 	c.logger.Debug(prettify()+"Got message %v", req.Command)
 	res.Command = req.Command
 	res.ReqID = req.ReqID
+
+	if req.Command == "UPLOADLOGS" {
+		res.ResData = EmptyObject{}
+	}
 
 	if req.Command == "INFO" {
 		var info InfoResponse
@@ -103,11 +107,6 @@ func (c *Control) ProcessRequest() {
 			os.Exit(0)
 		}
 	}
-
-	if req.Command == "UPLOADLOGS" {
-		res.ResData = EmptyObject{}
-	}
-
 	b, err := json.Marshal(res)
 	if err != nil {
 		c.logger.Error(prettify() + "Unable to marshal info response")
